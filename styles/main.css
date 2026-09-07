@@ -14,7 +14,6 @@
     --dm-text: #334155;
     --dm-muted: #64748b;
     --dm-light: #94a3b8;
-
     --dm-border: #e2e8f0;
     --dm-border-light: #eef2f7;
 
@@ -55,7 +54,6 @@ body {
 
 .stApp {
     min-height: 100vh;
-
     background:
         radial-gradient(
             circle at 7% 10%,
@@ -73,7 +71,6 @@ body {
             transparent 34%
         ),
         #f8fafc;
-
     color: var(--dm-text);
 }
 
@@ -95,7 +92,6 @@ body {
 
 .main .block-container {
     max-width: 1500px;
-
     padding-top: 0.75rem;
     padding-bottom: 3.5rem;
     padding-left: 2.2rem;
@@ -213,7 +209,6 @@ section[data-testid="stSidebar"] label {
 
 .dm-brand-name {
     color: var(--dm-navy);
-
     font-size: 24px;
     line-height: 1.1;
     font-weight: 800;
@@ -222,10 +217,8 @@ section[data-testid="stSidebar"] label {
 
 .dm-brand-tagline {
     color: #64748b;
-
     font-size: 12px;
     line-height: 1.3;
-
     margin-top: 4px;
 }
 
@@ -236,7 +229,6 @@ section[data-testid="stSidebar"] label {
 
 .dm-sidebar-divider {
     height: 1px;
-
     background: #e5e7eb;
 
     margin:
@@ -262,7 +254,6 @@ section[data-testid="stSidebar"]
 
 section[data-testid="stSidebar"]
 [data-testid="stPageLink"] a {
-
     min-height: 49px !important;
 
     padding:
@@ -275,7 +266,6 @@ section[data-testid="stSidebar"]
     border-radius: 13px !important;
 
     color: #172554 !important;
-
     background: transparent !important;
 
     border: 1px solid transparent !important;
@@ -295,7 +285,6 @@ section[data-testid="stSidebar"]
 
 section[data-testid="stSidebar"]
 [data-testid="stPageLink"] a:hover {
-
     color: #5b21b6 !important;
 
     background: #f5f3ff !important;
@@ -307,7 +296,6 @@ section[data-testid="stSidebar"]
 
 section[data-testid="stSidebar"]
 [data-testid="stPageLink"] a[aria-current="page"] {
-
     color: #5b21b6 !important;
 
     background:
@@ -329,7 +317,6 @@ section[data-testid="stSidebar"]
 
 section[data-testid="stSidebar"]
 [data-testid="stPageLink"] a svg {
-
     width: 23px !important;
     height: 23px !important;
 
@@ -341,17 +328,15 @@ section[data-testid="stSidebar"]
 section[data-testid="stSidebar"]
 [data-testid="stPageLink"]
 a[aria-current="page"] svg {
-
     color: #6d28d9 !important;
 }
 
 
 /* ============================================================
-   ACCOUNT
+   ACCOUNT SECTION
    ============================================================ */
 
 .dm-auth-links-title {
-
     color: #94a3b8;
 
     font-size: 10px;
@@ -369,7 +354,6 @@ section[data-testid="stSidebar"]
 .dm-auth-links-title
 + div
 [data-testid="stPageLink"] {
-
     margin-top: 0 !important;
 }
 
@@ -383,7 +367,6 @@ section[data-testid="stSidebar"]
 }
 
 .dm-profile {
-
     display: flex;
     align-items: center;
 
@@ -414,7 +397,6 @@ section[data-testid="stSidebar"]
 }
 
 .dm-profile:hover {
-
     transform: translateY(-1px);
 
     box-shadow:
@@ -422,11 +404,14 @@ section[data-testid="stSidebar"]
         rgba(71, 85, 105, 0.07);
 }
 
-.dm-avatar {
 
+/* ============================================================
+   AVATAR
+   ============================================================ */
+
+.dm-avatar {
     width: 40px;
     height: 40px;
-
     flex: 0 0 40px;
 
     border-radius: 50%;
@@ -444,6 +429,10 @@ section[data-testid="stSidebar"]
 
     border:
         1px solid #ddd6fe;
+
+    box-shadow:
+        0 4px 12px
+        rgba(99, 102, 241, 0.08);
 }
 
 .dm-profile-text {
@@ -452,17 +441,17 @@ section[data-testid="stSidebar"]
 }
 
 .dm-profile-name {
-
     color: #172554;
 
     font-size: 14px;
     font-weight: 700;
 
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dm-profile-role {
-
     color: #6d28d9;
 
     font-size: 12px;
@@ -470,8 +459,29 @@ section[data-testid="stSidebar"]
     margin-top: 2px;
 }
 
-.dm-profile-arrow {
 
+/* New email styling */
+
+.dm-profile-email {
+    color: #64748b;
+
+    font-size: 11px;
+
+    margin-top: 3px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    max-width: 205px;
+}
+
+
+/* ============================================================
+   PROFILE ARROW
+   ============================================================ */
+
+.dm-profile-arrow {
     width: 30px;
     height: 30px;
 
@@ -490,7 +500,6 @@ section[data-testid="stSidebar"]
 }
 
 .dm-profile:hover .dm-profile-arrow {
-
     color: #6d28d9;
 
     background:
@@ -502,11 +511,132 @@ section[data-testid="stSidebar"]
 
 
 /* ============================================================
+   GUEST ACCOUNT
+   ============================================================ */
+
+.dm-guest {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    padding:
+        12px
+        10px;
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(248, 250, 252, 0.95),
+            rgba(245, 243, 255, 0.75)
+        );
+
+    border:
+        1px solid #e2e8f0;
+
+    box-shadow:
+        0 8px 22px
+        rgba(71, 85, 105, 0.035);
+}
+
+.dm-avatar-guest {
+    background: #f1f5f9;
+
+    color: #64748b;
+
+    border-color: #e2e8f0;
+
+    box-shadow: none;
+}
+
+.dm-guest .dm-profile-name {
+    color: #334155;
+}
+
+.dm-guest .dm-profile-email {
+    color: #94a3b8;
+}
+
+
+/* ============================================================
+   AUTH SIDEBAR ACTIONS
+   ============================================================ */
+
+.dm-auth-actions {
+    display: flex;
+
+    gap: 8px;
+
+    margin-top: 10px;
+}
+
+
+/* Sidebar Login/Register buttons */
+
+section[data-testid="stSidebar"]
+.dm-auth-actions
+.stButton > button {
+    min-height: 40px !important;
+
+    padding:
+        0
+        10px !important;
+
+    border-radius: 11px !important;
+
+    font-size: 12px !important;
+    font-weight: 700 !important;
+}
+
+
+/* ============================================================
+   LOGOUT BUTTON
+   ============================================================ */
+
+.dm-logout-wrap {
+    margin-top: 9px;
+}
+
+.dm-logout-wrap .stButton > button {
+    min-height: 38px !important;
+
+    border:
+        1px solid #e2e8f0 !important;
+
+    background:
+        rgba(255, 255, 255, 0.85) !important;
+
+    color: #475569 !important;
+
+    box-shadow:
+        0 4px 12px
+        rgba(71, 85, 105, 0.04) !important;
+
+    font-size: 12px !important;
+}
+
+.dm-logout-wrap .stButton > button:hover {
+    color: #dc2626 !important;
+
+    background:
+        #fef2f2 !important;
+
+    border-color:
+        #fecaca !important;
+
+    box-shadow:
+        0 8px 18px
+        rgba(220, 38, 38, 0.08) !important;
+}
+
+
+/* ============================================================
    HAMBURGER / SIDEBAR COLLAPSE
    ============================================================ */
 
 button[data-testid="stSidebarCollapseButton"] {
-
     position: fixed !important;
 
     top: 18px !important;
@@ -553,7 +683,6 @@ button[data-testid="stSidebarCollapseButton"] svg {
 }
 
 button[data-testid="stSidebarCollapseButton"]::after {
-
     content: "☰";
 
     color: #5b21b6;
@@ -564,7 +693,6 @@ button[data-testid="stSidebarCollapseButton"]::after {
 }
 
 button[data-testid="stSidebarCollapseButton"]:hover {
-
     transform:
         translateY(-1px) !important;
 
@@ -582,7 +710,6 @@ button[data-testid="stSidebarCollapseButton"]:hover {
    ============================================================ */
 
 button[data-testid="stSidebarCollapsedControl"] {
-
     position: fixed !important;
 
     top: 18px !important;
@@ -624,7 +751,6 @@ button[data-testid="stSidebarCollapsedControl"] svg {
 }
 
 button[data-testid="stSidebarCollapsedControl"]::after {
-
     content: "☰";
 
     color: #5b21b6;
@@ -635,11 +761,12 @@ button[data-testid="stSidebarCollapsedControl"]::after {
 }
 
 
-/* Fallback */
+/* ============================================================
+   FALLBACK SIDEBAR BUTTON
+   ============================================================ */
 
 button[aria-label*="Expand sidebar"],
 button[aria-label*="Expand"] {
-
     position: fixed !important;
 
     top: 18px !important;
@@ -673,7 +800,6 @@ button[aria-label*="Expand"] svg {
 
 button[aria-label*="Expand sidebar"]::after,
 button[aria-label*="Expand"]::after {
-
     content: "☰";
 
     color: #5b21b6;
@@ -692,7 +818,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-hero {
-
     position: relative;
 
     min-height: 330px;
@@ -709,13 +834,11 @@ button[aria-label*="Expand"]::after {
     align-items: center;
 
     background:
-
         radial-gradient(
             circle at 83% 46%,
             rgba(196, 181, 253, 0.25),
             transparent 25%
         ),
-
         linear-gradient(
             110deg,
             rgba(245, 243, 255, 0.96),
@@ -729,14 +852,12 @@ button[aria-label*="Expand"]::after {
     box-shadow:
         0 18px 50px
         rgba(71, 85, 105, 0.08),
-
         inset
         0 1px 0
         rgba(255, 255, 255, 0.9);
 }
 
 .dm-hero::before {
-
     content: "";
 
     position: absolute;
@@ -760,7 +881,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-hero::after {
-
     content: "";
 
     position: absolute;
@@ -784,10 +904,11 @@ button[aria-label*="Expand"]::after {
 }
 
 
-/* Hero text */
+/* ============================================================
+   HERO TEXT
+   ============================================================ */
 
 .dm-hero-copy {
-
     position: relative;
 
     z-index: 4;
@@ -796,11 +917,9 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-eyebrow {
-
     color: #4338ca;
 
     font-size: 13px;
-
     font-weight: 800;
 
     letter-spacing: 2.4px;
@@ -809,7 +928,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-hero h1 {
-
     margin: 0;
 
     font-size:
@@ -825,7 +943,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-hero h1 span {
-
     background:
         linear-gradient(
             90deg,
@@ -841,7 +958,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-hero p {
-
     max-width: 660px;
 
     margin:
@@ -862,7 +978,6 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-hero-visual {
-
     position: absolute;
 
     right: 30px;
@@ -875,7 +990,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-orbit {
-
     position: absolute;
 
     border:
@@ -886,7 +1000,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-orbit-one {
-
     width: 360px;
     height: 210px;
 
@@ -898,7 +1011,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-orbit-two {
-
     width: 280px;
     height: 165px;
 
@@ -915,7 +1027,6 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-laptop {
-
     position: absolute;
 
     right: 70px;
@@ -935,7 +1046,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-laptop-screen {
-
     position: absolute;
 
     left: 36px;
@@ -969,7 +1079,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-screen-panel {
-
     position: absolute;
 
     right: 15px;
@@ -984,7 +1093,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-chart-bar {
-
     position: absolute;
 
     bottom: 24px;
@@ -1026,7 +1134,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-chart-line {
-
     position: absolute;
 
     left: 21px;
@@ -1049,7 +1156,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-laptop-base {
-
     position: absolute;
 
     left: 0;
@@ -1085,7 +1191,6 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-db {
-
     position: absolute;
 
     display: flex;
@@ -1118,13 +1223,11 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-db-top {
-
     right: 105px;
     top: 18px;
 }
 
 .dm-db-left {
-
     left: 34px;
     top: 140px;
 
@@ -1132,7 +1235,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-db-right {
-
     right: 4px;
     top: 132px;
 
@@ -1145,11 +1247,8 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-status-row {
-
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
 
     gap: 20px;
@@ -1161,9 +1260,7 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-ai-status {
-
     display: inline-flex;
-
     align-items: center;
 
     gap: 9px;
@@ -1184,12 +1281,10 @@ button[aria-label*="Expand"]::after {
     color: #6d28d9;
 
     font-size: 13px;
-
     font-weight: 700;
 }
 
 .dm-status-dot {
-
     width: 8px;
     height: 8px;
 
@@ -1203,11 +1298,9 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-platform-label {
-
     color: #94a3b8;
 
     font-size: 13px;
-
     font-weight: 600;
 }
 
@@ -1221,7 +1314,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-section-heading {
-
     padding:
         0
         5px
@@ -1229,16 +1321,13 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-section-heading h2 {
-
     margin: 0;
 
     font-size: 23px !important;
-
     font-weight: 800 !important;
 }
 
 .dm-section-heading p {
-
     margin:
         5px
         0
@@ -1257,7 +1346,6 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-metrics {
-
     display: grid;
 
     grid-template-columns:
@@ -1272,7 +1360,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-metric-card {
-
     position: relative;
 
     overflow: hidden;
@@ -1298,7 +1385,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-metric-card::after {
-
     content: "";
 
     position: absolute;
@@ -1318,7 +1404,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-metric-card:hover {
-
     transform:
         translateY(-3px);
 
@@ -1331,7 +1416,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-metric-icon {
-
     width: 38px;
     height: 38px;
 
@@ -1349,7 +1433,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-metric-value {
-
     font-size: 24px;
 
     line-height: 1.1;
@@ -1362,7 +1445,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-metric-label {
-
     color: #64748b;
 
     font-size: 12px;
@@ -1376,10 +1458,11 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-workspace-card {
-
     position: relative;
 
     min-height: 295px;
+
+    cursor: pointer;
 
     padding:
         25px
@@ -1391,7 +1474,6 @@ button[aria-label*="Expand"]::after {
     overflow: hidden;
 
     background:
-
         radial-gradient(
             circle at 100% 0%,
             color-mix(
@@ -1401,7 +1483,6 @@ button[aria-label*="Expand"]::after {
             ),
             transparent 45%
         ),
-
         rgba(255, 255, 255, 0.80);
 
     border:
@@ -1423,7 +1504,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-workspace-card:hover {
-
     transform:
         translateY(-4px);
 
@@ -1445,7 +1525,6 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-card-icon {
-
     width: 60px;
     height: 60px;
 
@@ -1498,7 +1577,6 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-workspace-card h3 {
-
     margin:
         0
         0
@@ -1510,7 +1588,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-workspace-card p {
-
     margin: 0;
 
     font-size: 14px;
@@ -1528,7 +1605,6 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-card-arrow {
-
     position: absolute;
 
     left: 25px;
@@ -1561,7 +1637,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-workspace-card:hover .dm-card-arrow {
-
     transform:
         translateX(3px);
 
@@ -1575,88 +1650,10 @@ button[aria-label*="Expand"]::after {
 
 
 /* ============================================================
-   WORKSPACE CARD CLICK AREA
-   ============================================================ */
-
-[data-testid="column"]:has(.dm-workspace-card)
-[data-testid="stPageLink"] {
-
-    position: relative !important;
-
-    z-index: 20 !important;
-
-    margin-top:
-        -295px !important;
-
-    height:
-        295px !important;
-
-    pointer-events: auto !important;
-}
-
-[data-testid="column"]:has(.dm-workspace-card)
-[data-testid="stPageLink"] a {
-
-    width: 100% !important;
-
-    height: 295px !important;
-
-    min-height: 295px !important;
-
-    display: flex !important;
-
-    align-items: flex-end !important;
-
-    justify-content: flex-start !important;
-
-    padding:
-        0
-        25px
-        20px !important;
-
-    border:
-        1px solid transparent !important;
-
-    border-radius:
-        18px !important;
-
-    background:
-        transparent !important;
-
-    color:
-        transparent !important;
-
-    text-decoration:
-        none !important;
-
-    box-shadow:
-        none !important;
-}
-
-[data-testid="column"]:has(.dm-workspace-card)
-[data-testid="stPageLink"] a span {
-
-    color:
-        transparent !important;
-}
-
-[data-testid="column"]:has(.dm-workspace-card)
-[data-testid="stPageLink"] a:hover {
-
-    background:
-        rgba(255, 255, 255, 0.025) !important;
-
-    border-color:
-        transparent !important;
-}
-
-
-/* ============================================================
    QUICK ACCESS
    ============================================================ */
 
 .dm-quick-access-icon {
-
     position: absolute;
 
     z-index: 3;
@@ -1682,14 +1679,12 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-quick-access-icon svg {
-
     width: 23px;
     height: 23px;
 }
 
 [data-testid="column"]:has(.dm-quick-access-icon)
 [data-testid="stPageLink"] {
-
     margin-top: 0 !important;
 
     position: relative !important;
@@ -1699,9 +1694,7 @@ button[aria-label*="Expand"]::after {
 
 [data-testid="column"]:has(.dm-quick-access-icon)
 [data-testid="stPageLink"] a {
-
     min-height: 68px !important;
-
     height: 68px !important;
 
     padding:
@@ -1711,7 +1704,6 @@ button[aria-label*="Expand"]::after {
         88px !important;
 
     display: flex !important;
-
     align-items: center !important;
 
     border-radius: 16px !important;
@@ -1730,7 +1722,6 @@ button[aria-label*="Expand"]::after {
         rgba(71, 85, 105, 0.045);
 
     font-size: 15px !important;
-
     font-weight: 600 !important;
 
     text-decoration: none !important;
@@ -1744,13 +1735,11 @@ button[aria-label*="Expand"]::after {
 
 [data-testid="column"]:has(.dm-quick-access-icon)
 [data-testid="stPageLink"] a svg {
-
     display: none !important;
 }
 
 [data-testid="column"]:has(.dm-quick-access-icon)
 [data-testid="stPageLink"] a:hover {
-
     background:
         #ffffff !important;
 
@@ -1771,7 +1760,6 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-how-section {
-
     margin-top: 52px;
 
     padding: 32px;
@@ -1794,7 +1782,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-how-grid {
-
     display: grid;
 
     grid-template-columns:
@@ -1806,7 +1793,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-how-card {
-
     padding: 22px;
 
     border-radius: 18px;
@@ -1823,7 +1809,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-how-card:hover {
-
     transform:
         translateY(-3px);
 
@@ -1836,7 +1821,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-how-number {
-
     width: 34px;
     height: 34px;
 
@@ -1858,7 +1842,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-how-card h3 {
-
     margin:
         0
         0
@@ -1870,7 +1853,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-how-card p {
-
     margin: 0;
 
     color: #64748b;
@@ -1886,7 +1868,6 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-bottom-cta {
-
     margin:
         42px
         0
@@ -1915,7 +1896,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-bottom-cta h2 {
-
     margin:
         0
         0
@@ -1929,7 +1909,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-bottom-cta p {
-
     margin: 0;
 
     color: #64748b;
@@ -1938,7 +1917,6 @@ button[aria-label*="Expand"]::after {
 }
 
 .dm-footer {
-
     text-align: center;
 
     padding:
@@ -1961,26 +1939,28 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-auth-wrap {
-
     max-width: 650px;
 
     margin:
         65px
         auto
         20px;
+
+    padding:
+        0
+        10px;
 }
 
 .dm-auth-card {
+    padding: 38px;
 
-    padding: 34px;
-
-    border-radius: 22px;
+    border-radius: 24px;
 
     background:
         linear-gradient(
             135deg,
-            rgba(255, 255, 255, 0.90),
-            rgba(245, 243, 255, 0.82)
+            rgba(255, 255, 255, 0.96),
+            rgba(245, 243, 255, 0.88)
         );
 
     border:
@@ -1989,10 +1969,36 @@ button[aria-label*="Expand"]::after {
     box-shadow:
         0 18px 50px
         rgba(71, 85, 105, 0.08);
+
+    position: relative;
+
+    overflow: hidden;
+}
+
+.dm-auth-card::before {
+    content: "";
+
+    position: absolute;
+
+    width: 180px;
+    height: 180px;
+
+    top: -90px;
+    right: -60px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(196, 181, 253, 0.28),
+            transparent 70%
+        );
+
+    pointer-events: none;
 }
 
 .dm-auth-card h1 {
-
     margin:
         0
         0
@@ -2003,11 +2009,137 @@ button[aria-label*="Expand"]::after {
     font-weight: 800 !important;
 }
 
-.dm-auth-card p {
+.dm-auth-card h2 {
+    margin:
+        0
+        0
+        8px;
 
+    font-size: 28px !important;
+
+    font-weight: 800 !important;
+}
+
+.dm-auth-card p {
     margin: 0;
 
     line-height: 1.7;
+}
+
+
+/* Auth brand */
+
+.dm-auth-brand {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    margin-bottom: 22px;
+}
+
+.dm-auth-brand-mark {
+    width: 44px;
+    height: 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #4c1d95,
+            #7c3aed,
+            #6366f1
+        );
+
+    color: #ffffff;
+
+    font-size: 23px;
+
+    font-weight: 900;
+
+    box-shadow:
+        0 8px 20px
+        rgba(124, 58, 237, 0.18);
+}
+
+.dm-auth-brand-name {
+    color: #172554;
+
+    font-size: 18px;
+
+    font-weight: 800;
+}
+
+
+/* Auth note */
+
+.dm-auth-note {
+    margin-top: 18px;
+
+    text-align: center;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+.dm-auth-note a {
+    color: #6d28d9 !important;
+
+    font-weight: 700;
+
+    text-decoration: none;
+}
+
+.dm-auth-note a:hover {
+    text-decoration: underline;
+}
+
+
+/* Auth form */
+
+.dm-auth-card .stTextInput {
+    margin-bottom: 4px;
+}
+
+.dm-auth-card .stTextInput label {
+    color: #334155 !important;
+
+    font-size: 13px !important;
+
+    font-weight: 650 !important;
+}
+
+.dm-auth-card .stTextInput input {
+    min-height: 46px !important;
+
+    padding:
+        0
+        14px !important;
+
+    font-size: 14px !important;
+
+    border-radius: 12px !important;
+}
+
+
+/* Auth submit button */
+
+.dm-auth-card [data-testid="stFormSubmitButton"] {
+    margin-top: 10px;
+}
+
+.dm-auth-card [data-testid="stFormSubmitButton"] button {
+    min-height: 48px !important;
+
+    font-size: 15px !important;
+
+    border-radius: 13px !important;
 }
 
 
@@ -2016,14 +2148,12 @@ button[aria-label*="Expand"]::after {
    ============================================================ */
 
 .dm-page-heading {
-
     margin-top: 55px;
 
     margin-bottom: 25px;
 }
 
 .dm-page-heading h1 {
-
     margin:
         0
         0
@@ -2046,7 +2176,6 @@ button[aria-label*="Expand"]::after {
 .stButton > button,
 button[kind="primary"],
 [data-testid="stFormSubmitButton"] button {
-
     min-height: 42px;
 
     border-radius: 12px !important;
@@ -2078,7 +2207,6 @@ button[kind="primary"],
 .stButton > button *,
 button[kind="primary"] *,
 [data-testid="stFormSubmitButton"] button * {
-
     color:
         #ffffff !important;
 
@@ -2088,7 +2216,6 @@ button[kind="primary"] *,
 .stButton > button:hover,
 button[kind="primary"]:hover,
 [data-testid="stFormSubmitButton"] button:hover {
-
     transform:
         translateY(-1px);
 
@@ -2106,7 +2233,6 @@ button[kind="primary"]:hover,
 .stTextArea textarea,
 .stNumberInput input,
 div[data-baseweb="select"] > div {
-
     background:
         rgba(255, 255, 255, 0.88) !important;
 
@@ -2123,7 +2249,6 @@ div[data-baseweb="select"] > div {
 .stTextInput input:focus,
 .stTextArea textarea:focus,
 .stNumberInput input:focus {
-
     border-color:
         #a78bfa !important;
 
@@ -2138,7 +2263,6 @@ div[data-baseweb="select"] > div {
    ============================================================ */
 
 section[data-testid="stFileUploaderDropzone"] {
-
     background:
         rgba(255, 255, 255, 0.76);
 
@@ -2154,7 +2278,6 @@ section[data-testid="stFileUploaderDropzone"] {
 }
 
 section[data-testid="stFileUploaderDropzone"]:hover {
-
     background:
         rgba(245, 243, 255, 0.85);
 
@@ -2168,7 +2291,6 @@ section[data-testid="stFileUploaderDropzone"]:hover {
    ============================================================ */
 
 div[data-testid="stMetric"] {
-
     background:
         rgba(255, 255, 255, 0.78);
 
@@ -2192,7 +2314,6 @@ div[data-testid="stMetric"] {
    ============================================================ */
 
 div[data-testid="stDataFrame"] {
-
     border:
         1px solid #e2e8f0;
 
@@ -2213,7 +2334,6 @@ div[data-testid="stDataFrame"] {
    ============================================================ */
 
 details {
-
     background:
         rgba(255, 255, 255, 0.72) !important;
 
@@ -2245,6 +2365,63 @@ hr {
 
 
 /* ============================================================
+   WORKSPACE CARD LINK
+   ============================================================ */
+
+.dm-workspace-card-link {
+    display: block;
+
+    width: 100%;
+
+    color: inherit !important;
+
+    text-decoration: none !important;
+
+    border: 0 !important;
+
+    outline: none !important;
+
+    background: transparent !important;
+
+    border-radius: 18px;
+}
+
+.dm-workspace-card-link:visited,
+.dm-workspace-card-link:hover,
+.dm-workspace-card-link:focus,
+.dm-workspace-card-link:active {
+    color: inherit !important;
+
+    text-decoration: none !important;
+}
+
+.dm-workspace-card-link:focus-visible {
+    outline:
+        2px solid #8b5cf6 !important;
+
+    outline-offset: 4px;
+
+    border-radius: 20px;
+}
+
+.dm-workspace-card-link .dm-workspace-card {
+    width: 100%;
+
+    box-sizing: border-box;
+}
+
+.dm-workspace-card-link:hover .dm-workspace-card {
+    transform:
+        translateY(-4px);
+}
+
+.dm-workspace-card-link:hover .dm-card-arrow {
+    transform:
+        translateX(5px);
+}
+
+
+/* ============================================================
    RESPONSIVE - TABLET
    ============================================================ */
 
@@ -2255,8 +2432,8 @@ hr {
     }
 
     section[data-testid="stSidebar"] {
-
         width: 300px !important;
+
         min-width: 300px !important;
     }
 
@@ -2274,15 +2451,14 @@ hr {
     }
 
     .dm-hero-visual {
-
         opacity: 0.72;
 
         right: -45px;
     }
 
     .dm-workspace-card {
-
         padding-left: 21px;
+
         padding-right: 21px;
     }
 
@@ -2299,6 +2475,10 @@ hr {
         grid-template-columns:
             1fr;
     }
+
+    .dm-profile-email {
+        max-width: 175px;
+    }
 }
 
 
@@ -2309,13 +2489,12 @@ hr {
 @media (max-width: 850px) {
 
     .main .block-container {
-
         padding-left: 1rem;
+
         padding-right: 1rem;
     }
 
     .dm-status-row {
-
         align-items: flex-start;
 
         flex-direction: column;
@@ -2324,7 +2503,6 @@ hr {
     }
 
     .dm-hero {
-
         min-height: 420px;
 
         padding:
@@ -2333,7 +2511,6 @@ hr {
     }
 
     .dm-hero-copy {
-
         width: 100%;
 
         align-self:
@@ -2341,7 +2518,6 @@ hr {
     }
 
     .dm-hero-visual {
-
         width: 100%;
 
         height: 220px;
@@ -2356,7 +2532,6 @@ hr {
     }
 
     .dm-laptop {
-
         right: 50%;
 
         transform:
@@ -2374,19 +2549,16 @@ hr {
     }
 
     .dm-hero h1 {
-
         font-size:
             2.65rem !important;
     }
 
     .dm-metrics {
-
         grid-template-columns:
             repeat(2, 1fr);
     }
 
     .dm-how-section {
-
         padding: 25px;
     }
 }
@@ -2399,7 +2571,6 @@ hr {
 @media (max-width: 650px) {
 
     section[data-testid="stSidebar"] {
-
         width: 290px !important;
 
         min-width: 290px !important;
@@ -2410,7 +2581,6 @@ hr {
     }
 
     .dm-brand-mark {
-
         width: 50px;
         height: 50px;
 
@@ -2420,72 +2590,80 @@ hr {
     }
 
     .dm-hero {
-
         border-radius: 20px;
     }
 
     .dm-hero h1 {
-
         font-size:
             2.3rem !important;
     }
 
     .dm-hero p {
-
         font-size: 14px;
     }
 
     .dm-section-heading h2 {
-
         font-size:
             21px !important;
     }
 
     .dm-page-heading {
-
         margin-top: 35px;
     }
 
     .dm-page-heading h1 {
-
         font-size:
             32px !important;
     }
 
     .dm-auth-wrap {
-
         margin-top: 35px;
+
+        padding:
+            0
+            4px;
     }
 
     .dm-auth-card {
-
         padding: 25px;
+
+        border-radius: 20px;
+    }
+
+    .dm-auth-card h1 {
+        font-size: 30px !important;
+    }
+
+    .dm-auth-card h2 {
+        font-size: 25px !important;
     }
 
     .dm-metrics {
-
         grid-template-columns:
             1fr;
     }
 
     .dm-how-section {
-
         padding: 22px;
 
         border-radius: 20px;
     }
 
     .dm-bottom-cta {
-
-        padding: 25px 18px;
+        padding:
+            25px
+            18px;
 
         border-radius: 19px;
     }
 
     .dm-bottom-cta h2 {
-
         font-size:
             21px;
+    }
+
+    .dm-profile-email {
+        max-width: 155px;
     }
 }
 
@@ -2497,13 +2675,12 @@ hr {
 @media (max-width: 480px) {
 
     .main .block-container {
-
         padding-left: 0.75rem;
+
         padding-right: 0.75rem;
     }
 
     .dm-hero {
-
         min-height: 400px;
 
         padding:
@@ -2512,19 +2689,16 @@ hr {
     }
 
     .dm-hero h1 {
-
         font-size:
             2.05rem !important;
     }
 
     .dm-hero p {
-
         line-height:
             1.6;
     }
 
     .dm-laptop {
-
         transform:
             translateX(50%)
             rotate(-7deg)
@@ -2532,7 +2706,6 @@ hr {
     }
 
     .dm-db {
-
         transform:
             scale(0.82);
     }
@@ -2546,7 +2719,6 @@ hr {
     }
 
     .dm-card-icon {
-
         width: 55px;
         height: 55px;
 
@@ -2554,28 +2726,26 @@ hr {
     }
 
     .dm-workspace-card {
-
         min-height: 280px;
     }
 
-    [data-testid="column"]:has(.dm-workspace-card)
-    [data-testid="stPageLink"] {
-
-        margin-top:
-            -280px !important;
-
-        height:
-            280px !important;
+    .dm-auth-card {
+        padding: 21px;
     }
 
-    [data-testid="column"]:has(.dm-workspace-card)
-    [data-testid="stPageLink"] a {
+    .dm-auth-brand {
+        margin-bottom: 18px;
+    }
 
-        height:
-            280px !important;
+    .dm-auth-brand-mark {
+        width: 40px;
+        height: 40px;
 
-        min-height:
-            280px !important;
+        font-size: 21px;
+    }
+
+    .dm-auth-brand-name {
+        font-size: 16px;
     }
 }
 
@@ -2589,7 +2759,6 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-
     outline:
         2px solid #8b5cf6 !important;
 
@@ -2607,7 +2776,6 @@ select:focus-visible {
     *,
     *::before,
     *::after {
-
         animation-duration:
             0.01ms !important;
 
@@ -2619,5 +2787,570 @@ select:focus-visible {
 
         scroll-behavior:
             auto !important;
+    }
+}
+
+/* ============================================================
+   FOUNDER SECTION
+   ============================================================ */
+
+.dm-founder-section {
+    margin: 42px 0 18px 0;
+    padding: 24px 28px;
+    border-radius: 22px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(245, 243, 255, 0.95),
+            rgba(238, 242, 255, 0.92),
+            rgba(236, 254, 255, 0.90)
+        );
+    border: 1px solid #ddd6fe;
+    box-shadow: 0 10px 30px rgba(76, 29, 149, 0.055);
+}
+
+.dm-founder-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.dm-founder-avatar {
+    width: 58px;
+    height: 58px;
+    min-width: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 17px;
+    background: linear-gradient(135deg, #7c3aed, #6366f1);
+    color: white;
+    font-size: 22px;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.20);
+}
+
+.dm-founder-info {
+    text-align: left;
+}
+
+.dm-founder-eyebrow {
+    margin-bottom: 4px;
+    color: #7c3aed;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.dm-founder-info h3 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.dm-founder-role {
+    margin-top: 2px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.dm-founder-info p {
+    margin: 7px 0 0 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.dm-footer {
+    text-align: center;
+    padding: 18px 0 28px 0;
+    color: #94a3b8;
+    font-size: 11px;
+    line-height: 1.7;
+}
+
+.dm-footer-brand {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+}
+
+.dm-footer-brand strong {
+    color: #7c3aed;
+    font-weight: 800;
+}
+
+.dm-footer-tech {
+    margin-top: 3px;
+    color: #a1a1aa;
+}
+
+.dm-footer-copy {
+    margin-top: 3px;
+    color: #b0b7c3;
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+    .dm-founder-section {
+        padding: 20px;
+    }
+
+    .dm-founder-content {
+        justify-content: flex-start;
+    }
+
+    .dm-founder-avatar {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        border-radius: 14px;
+        font-size: 18px;
+    }
+
+    .dm-founder-info h3 {
+        font-size: 17px;
+    }
+
+    .dm-founder-info p {
+        font-size: 11px;
+    }
+
+    .dm-footer-brand {
+        flex-wrap: wrap;
+    }
+
+}
+
+/* ============================================================
+   PREMIUM FOUNDER SECTION
+   ============================================================ */
+
+.dm-founder-section {
+    position: relative;
+    overflow: hidden;
+    margin: 58px 0 24px 0;
+    padding: 42px 46px 28px 46px;
+    border-radius: 28px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #faf8ff 0%,
+            #f4f2ff 42%,
+            #eef7ff 72%,
+            #ecfeff 100%
+        );
+
+    border: 1px solid #ddd6fe;
+
+    box-shadow:
+        0 18px 50px rgba(76, 29, 149, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+
+/* ------------------------------------------------------------
+   Decorative Glow
+   ------------------------------------------------------------ */
+
+.dm-founder-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(2px);
+}
+
+.dm-founder-glow-1 {
+    width: 220px;
+    height: 220px;
+    top: -120px;
+    right: -60px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(139, 92, 246, 0.14) 0%,
+            rgba(139, 92, 246, 0) 70%
+        );
+}
+
+.dm-founder-glow-2 {
+    width: 180px;
+    height: 180px;
+    bottom: -100px;
+    left: -50px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(6, 182, 212, 0.10) 0%,
+            rgba(6, 182, 212, 0) 70%
+        );
+}
+
+
+/* ------------------------------------------------------------
+   Main Founder Layout
+   ------------------------------------------------------------ */
+
+.dm-founder-inner {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 38px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+
+/* ------------------------------------------------------------
+   Founder Profile
+   ------------------------------------------------------------ */
+
+.dm-founder-profile {
+    flex: 0 0 155px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* Avatar outer ring */
+
+.dm-founder-avatar-ring {
+    width: 112px;
+    height: 112px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 32px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(124, 58, 237, 0.18),
+            rgba(99, 102, 241, 0.10)
+        );
+
+    border: 1px solid rgba(124, 58, 237, 0.16);
+
+    box-shadow:
+        0 14px 35px rgba(99, 102, 241, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+
+/* Main avatar */
+
+.dm-founder-avatar {
+    width: 82px;
+    height: 82px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 25px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed 0%,
+            #6366f1 55%,
+            #8b5cf6 100%
+        );
+
+    color: #ffffff;
+
+    font-size: 34px;
+    font-weight: 800;
+
+    box-shadow:
+        0 12px 28px rgba(99, 102, 241, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+
+/* Status */
+
+.dm-founder-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    margin-top: 14px;
+
+    padding: 6px 11px;
+
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(124, 58, 237, 0.12);
+
+    color: #64748b;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.dm-founder-status span {
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+
+    background: #8b5cf6;
+
+    box-shadow:
+        0 0 0 4px rgba(139, 92, 246, 0.10);
+}
+
+
+/* ------------------------------------------------------------
+   Founder Information
+   ------------------------------------------------------------ */
+
+.dm-founder-info {
+    flex: 1;
+    min-width: 0;
+}
+
+
+.dm-founder-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    margin-bottom: 7px;
+
+    color: #7c3aed;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 0.14em;
+}
+
+
+.dm-founder-line {
+    width: 24px;
+    height: 2px;
+
+    border-radius: 99px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #7c3aed,
+            #a78bfa
+        );
+}
+
+
+.dm-founder-info h2 {
+    margin: 0;
+
+    color: #172554;
+
+    font-size: 28px;
+    line-height: 1.15;
+
+    font-weight: 850;
+
+    letter-spacing: -0.025em;
+}
+
+
+.dm-founder-role {
+    margin-top: 7px;
+
+    color: #475569;
+
+    font-size: 13px;
+    font-weight: 650;
+}
+
+
+.dm-founder-role span {
+    color: #6d28d9;
+    font-weight: 800;
+}
+
+
+.dm-founder-bio {
+    max-width: 650px;
+
+    margin: 12px 0 0 0;
+
+    color: #64748b;
+
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+
+/* ------------------------------------------------------------
+   Founder Tags
+   ------------------------------------------------------------ */
+
+.dm-founder-tags {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    margin-top: 17px;
+}
+
+
+.dm-founder-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 7px 11px;
+
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, 0.70);
+
+    border: 1px solid rgba(148, 163, 184, 0.18);
+
+    color: #475569;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.dm-founder-tag:hover {
+    transform: translateY(-2px);
+
+    border-color: #ddd6fe;
+
+    box-shadow:
+        0 8px 20px rgba(76, 29, 149, 0.07);
+}
+
+
+.dm-founder-tag .dm-inline-icon {
+    font-size: 16px;
+    color: #7c3aed;
+}
+
+
+/* ------------------------------------------------------------
+   Founder Quote / Message
+   ------------------------------------------------------------ */
+
+.dm-founder-message {
+    position: relative;
+    z-index: 2;
+
+    max-width: 720px;
+
+    margin: 30px auto 0 auto;
+    padding-top: 20px;
+
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
+
+    text-align: center;
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    letter-spacing: 0.01em;
+}
+
+
+.dm-quote-mark {
+    color: #8b5cf6;
+
+    font-size: 20px;
+    font-weight: 800;
+
+    vertical-align: -2px;
+}
+
+
+/* ------------------------------------------------------------
+   Mobile
+   ------------------------------------------------------------ */
+
+@media (max-width: 700px) {
+
+    .dm-founder-section {
+        margin: 42px 0 20px 0;
+        padding: 30px 22px 24px 22px;
+        border-radius: 22px;
+    }
+
+    .dm-founder-inner {
+        flex-direction: column;
+        text-align: center;
+        gap: 24px;
+    }
+
+    .dm-founder-profile {
+        flex: none;
+    }
+
+    .dm-founder-info {
+        width: 100%;
+    }
+
+    .dm-founder-eyebrow {
+        justify-content: center;
+    }
+
+    .dm-founder-info h2 {
+        font-size: 24px;
+    }
+
+    .dm-founder-bio {
+        font-size: 12px;
+    }
+
+    .dm-founder-tags {
+        justify-content: center;
+    }
+
+    .dm-founder-message {
+        margin-top: 25px;
+        font-size: 11px;
     }
 }

@@ -1,5 +1,12 @@
 import streamlit as st
 from pathlib import Path
+import hashlib
+import hmac
+import html
+import re
+import secrets
+import sqlite3
+from datetime import datetime, timezone
 
 
 # ============================================================
@@ -20,6 +27,198 @@ st.set_page_config(
 
 BASE_DIR = Path(__file__).resolve().parent
 CSS_PATH = BASE_DIR / "styles" / "main.css"
+
+
+# ============================================================
+# AUTHENTICATION / DATABASE
+# ============================================================
+
+DB_DIR = BASE_DIR / "database"
+DB_PATH = DB_DIR / "datamind.db"
+
+
+def get_db_connection():
+    """Return a SQLite connection for the DataMind AI user database."""
+    DB_DIR.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(DB_PATH)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def init_database():
+    """Create the users table if it does not already exist."""
+    with get_db_connection() as connection:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.commit()
+
+
+def normalize_email(email):
+    return email.strip().lower()
+
+
+def hash_password(password):
+    """Hash a password with PBKDF2-HMAC-SHA256 and a random salt."""
+    salt = secrets.token_bytes(16)
+    iterations = 310_000
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt,
+        iterations,
+    )
+    return f"pbkdf2_sha256${iterations}${salt.hex()}${digest.hex()}"
+
+
+def verify_password(password, stored_hash):
+    """Verify a password against a stored PBKDF2 hash."""
+    try:
+        algorithm, iterations, salt_hex, digest_hex = stored_hash.split("$")
+        if algorithm != "pbkdf2_sha256":
+            return False
+
+        expected = bytes.fromhex(digest_hex)
+        actual = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode("utf-8"),
+            bytes.fromhex(salt_hex),
+            int(iterations),
+        )
+        return hmac.compare_digest(actual, expected)
+    except (ValueError, TypeError):
+        return False
+
+
+def get_user_by_email(email):
+    """Return a user by normalized email, or None."""
+    normalized = normalize_email(email)
+
+    with get_db_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT id, name, email, password_hash
+            FROM users
+            WHERE email = ?
+            """,
+            (normalized,),
+        ).fetchone()
+
+    return dict(row) if row else None
+
+
+def create_user(name, email, password):
+    """Create a user. Returns the user dict, or None for duplicate email."""
+    clean_name = " ".join(name.strip().split())
+    normalized = normalize_email(email)
+    password_hash = hash_password(password)
+
+    try:
+        with get_db_connection() as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO users (name, email, password_hash, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    clean_name,
+                    normalized,
+                    password_hash,
+                    datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+            connection.commit()
+
+            return {
+                "id": cursor.lastrowid,
+                "name": clean_name,
+                "email": normalized,
+            }
+    except sqlite3.IntegrityError:
+        return None
+
+
+def authenticate_user(email, password):
+    """Authenticate a user by email and password."""
+    user = get_user_by_email(email)
+
+    if not user or not verify_password(password, user["password_hash"]):
+        return None
+
+    return {
+        "id": user["id"],
+        "name": user["name"],
+        "email": user["email"],
+    }
+
+
+def init_auth_state():
+    """Initialize guest/authenticated session state."""
+    defaults = {
+        "logged_in": False,
+        "user_id": None,
+        "user_name": None,
+        "user_email": None,
+    }
+
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+
+def set_logged_in(user):
+    st.session_state.logged_in = True
+    st.session_state.user_id = user["id"]
+    st.session_state.user_name = user["name"]
+    st.session_state.user_email = user["email"]
+
+
+def logout_user():
+    for key in (
+        "logged_in",
+        "user_id",
+        "user_name",
+        "user_email",
+    ):
+        st.session_state.pop(key, None)
+
+    init_auth_state()
+    st.rerun()
+
+
+def get_initials(name):
+    """Return initials for the account avatar."""
+    parts = name.strip().split()
+
+    if not parts:
+        return "GU"
+
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+
+    return f"{parts[0][0]}{parts[-1][0]}".upper()
+
+
+def valid_email(email):
+    return bool(
+        re.fullmatch(
+            r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
+            email.strip(),
+        )
+    )
+
+
+# Create the local database and initialize the current visitor as Guest.
+init_database()
+init_auth_state()
 
 
 # ============================================================
@@ -307,6 +506,15 @@ st.html(
 
 
 # ============================================================
+# PAGE REGISTRY
+# ============================================================
+# Declared before page functions so Pylance knows that PAGES exists.
+# The actual st.Page objects are populated below before st.navigation runs.
+
+PAGES = {}
+
+
+# ============================================================
 # PAGE FUNCTIONS
 # ============================================================
 
@@ -526,183 +734,102 @@ def home_page():
     )
 
     # --------------------------------------------------------
-    # WORKSPACE HEADING
+    # WORKSPACE SECTION HEADING
     # --------------------------------------------------------
-
+    
     st.html(
         """
         <div class="dm-section-heading">
-
+    
             <h2>
                 Explore Your Workspace
             </h2>
-
+    
             <p>
                 Choose a tool and start working with your data.
             </p>
-
+    
         </div>
         """
     )
-
+    
+    
+    
     # --------------------------------------------------------
     # WORKSPACE CARDS
     # --------------------------------------------------------
 
     cards = [
-
         (
             "ai_assistant",
             "AI Assistant",
             "Ask questions, get insights and analyze your data using natural language.",
             "#8b5cf6",
             "chat_bubble_outline",
-            "Ask AI",
         ),
-
         (
             "ai_dashboard",
             "AI Dashboard",
             "Create interactive dashboards and transform raw data into visual insights.",
             "#6366f1",
             "analytics",
-            "View Dashboard",
         ),
-
         (
             "data_analyst",
             "Data Analyst",
             "Explore datasets, identify patterns and understand your data quickly.",
             "#06b6d4",
             "database",
-            "Analyze Data",
         ),
-
         (
             "pdf_intelligence",
             "PDF Intelligence",
             "Extract information, search documents and ask questions from PDFs.",
             "#a855f7",
             "picture_as_pdf",
-            "Work with PDFs",
         ),
-
     ]
 
     cols = st.columns(4, gap="medium")
 
-    for col, (
-        key,
-        title,
-        description,
-        accent,
-        icon,
-        button_label,
-    ) in zip(cols, cards):
+    for col, (key, title, description, accent, icon) in zip(cols, cards):
 
         with col:
+
+            # Use the actual URL registered by st.Page.
+            # The whole visual card is the navigation link.
+            page_url = PAGES[key].url_path or ""
 
             st.html(
                 f"""
-                <div
-                    class="dm-workspace-card"
-                    style="--card-accent:{accent};"
+                <a
+                    href="./{page_url}"
+                    target="_self"
+                    class="dm-workspace-card-link"
+                    aria-label="Open {title}"
                 >
+                    <div
+                        class="dm-workspace-card"
+                        style="--card-accent:{accent};"
+                    >
+                        <div class="dm-card-icon">
+                            {icon}
+                        </div>
 
-                    <div class="dm-card-icon">
-                        {icon}
+                        <h3>
+                            {title}
+                        </h3>
+
+                        <p>
+                            {description}
+                        </p>
+
+                        <div class="dm-card-arrow" aria-hidden="true">
+                            →
+                        </div>
                     </div>
-
-                    <h3>
-                        {title}
-                    </h3>
-
-                    <p>
-                        {description}
-                    </p>
-
-                    <div class="dm-card-arrow">
-                        →
-                    </div>
-
-                </div>
+                </a>
                 """
-            )
-
-            st.page_link(
-                PAGES[key],
-                label=button_label,
-                width="stretch",
-            )
-
-    # --------------------------------------------------------
-    # QUICK ACCESS
-    # --------------------------------------------------------
-
-    st.html(
-        """
-        <div class="dm-section-heading dm-quick-heading">
-
-            <h2>
-                Quick Access
-            </h2>
-
-            <p>
-                Jump directly to your favorite tools.
-            </p>
-
-        </div>
-        """
-    )
-
-    quick_cols = st.columns(4, gap="medium")
-
-    quick_items = [
-
-        (
-            PAGES["data_analyst"],
-            "Upload Data",
-            ":material/cloud_upload:",
-            "#8b5cf6",
-        ),
-
-        (
-            PAGES["ai_dashboard"],
-            "View Dashboard",
-            ":material/bar_chart:",
-            "#6366f1",
-        ),
-
-        (
-            PAGES["ai_assistant"],
-            "Ask AI",
-            ":material/chat:",
-            "#06b6d4",
-        ),
-
-        (
-            PAGES["pdf_intelligence"],
-            "Work with PDFs",
-            ":material/picture_as_pdf:",
-            "#a855f7",
-        ),
-
-    ]
-
-    for col, (
-        page,
-        label,
-        icon,
-        accent,
-    ) in zip(quick_cols, quick_items):
-
-        with col:
-
-            st.page_link(
-                page,
-                label=label,
-                icon=icon,
-                width="stretch",
             )
 
     # --------------------------------------------------------
@@ -807,15 +934,111 @@ def home_page():
         """
     )
 
+        # --------------------------------------------------------
+    # FOUNDER SECTION — LAST HOME CONTENT
     # --------------------------------------------------------
+
+    st.html(
+        """
+        <section class="dm-founder-section">
+
+            <div class="dm-founder-glow dm-founder-glow-1"></div>
+            <div class="dm-founder-glow dm-founder-glow-2"></div>
+
+            <div class="dm-founder-inner">
+
+                <div class="dm-founder-profile">
+
+                    <div class="dm-founder-avatar-ring">
+                        <div class="dm-founder-avatar">
+                            P
+                        </div>
+                    </div>
+
+                    <div class="dm-founder-status">
+                        <span></span>
+                        Building DataMind AI
+                    </div>
+
+                </div>
+
+                <div class="dm-founder-info">
+
+                    <div class="dm-founder-eyebrow">
+                        <span class="dm-founder-line"></span>
+                        MEET THE FOUNDER
+                    </div>
+
+                    <h2>
+                        Piyush Thakur
+                    </h2>
+
+                    <div class="dm-founder-role">
+                        Founder & Creator of
+                        <span>DataMind AI</span>
+                    </div>
+
+                    <p class="dm-founder-bio">
+                        Passionate about data, artificial intelligence and
+                        building meaningful technology. DataMind AI was created
+                        to make data analysis smarter, simpler and accessible
+                        to everyone.
+                    </p>
+
+                    <div class="dm-founder-tags">
+
+                        <div class="dm-founder-tag">
+                            <span class="dm-inline-icon">analytics</span>
+                            Data & AI
+                        </div>
+
+                        <div class="dm-founder-tag">
+                            <span class="dm-inline-icon">code</span>
+                            Technology
+                        </div>
+
+                        <div class="dm-founder-tag">
+                            <span class="dm-inline-icon">lightbulb</span>
+                            Innovation
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="dm-founder-message">
+                <span class="dm-quote-mark">“</span>
+                Turning ideas into intelligent solutions, one dataset at a time.
+                <span class="dm-quote-mark">”</span>
+            </div>
+
+        </section>
+        """
+    )
+        # --------------------------------------------------------
     # FOOTER
     # --------------------------------------------------------
 
     st.html(
         """
         <div class="dm-footer">
-            Built with <strong>DataMind AI</strong>
-            · Intelligent data analysis workspace
+
+            <div class="dm-footer-brand">
+                <strong>DataMind AI</strong>
+                <span>·</span>
+                Intelligent Data Analysis Workspace
+            </div>
+
+            <div class="dm-footer-tech">
+                Built with Python · Streamlit · Gemini AI
+            </div>
+
+            <div class="dm-footer-copy">
+                © 2026 DataMind AI · Created by Piyush Thakur
+            </div>
+
         </div>
 
         <div class="dm-home-bottom-space"></div>
@@ -823,45 +1046,46 @@ def home_page():
     )
 
 
+    
+
+
 # ============================================================
 # LOGIN PAGE
 # ============================================================
 
 def login_page():
+    if st.session_state.logged_in:
+        st.switch_page(PAGES["home"])
+        return
 
     st.html(
         """
         <div class="dm-auth-wrap">
-
             <div class="dm-auth-card">
-
                 <div class="dm-eyebrow">
                     DATAMIND AI
                 </div>
-
                 <h1>
                     Welcome back
                 </h1>
-
                 <p>
                     Sign in to continue to your DataMind AI workspace.
                 </p>
-
             </div>
-
         </div>
         """
     )
 
-    with st.form("login_form"):
-
-        st.text_input(
-            "Email"
+    with st.form("login_form", clear_on_submit=False):
+        email = st.text_input(
+            "Email",
+            placeholder="you@example.com",
         )
 
-        st.text_input(
+        password = st.text_input(
             "Password",
             type="password",
+            placeholder="Enter your password",
         )
 
         submitted = st.form_submit_button(
@@ -871,10 +1095,22 @@ def login_page():
         )
 
     if submitted:
+        if not email.strip() or not password:
+            st.error("Please enter your email and password.")
+            return
 
-        st.success(
-            "Login interface is ready. Connect your authentication backend here."
-        )
+        if not valid_email(email):
+            st.error("Please enter a valid email address.")
+            return
+
+        user = authenticate_user(email, password)
+
+        if user:
+            set_logged_in(user)
+            st.success("Login successful. Welcome back!")
+            st.switch_page(PAGES["home"])
+        else:
+            st.error("Invalid email or password. Please try again.")
 
 
 # ============================================================
@@ -882,63 +1118,111 @@ def login_page():
 # ============================================================
 
 def register_page():
+    if st.session_state.logged_in:
+        st.switch_page(PAGES["home"])
+        return
 
     st.html(
         """
         <div class="dm-auth-wrap">
-
             <div class="dm-auth-card">
-
                 <div class="dm-eyebrow">
                     DATAMIND AI
                 </div>
-
                 <h1>
                     Create your account
                 </h1>
-
                 <p>
                     Register when you are ready. You can keep using
                     the workspace without registering.
                 </p>
-
             </div>
-
         </div>
         """
     )
 
-    with st.form("register_form"):
-
-        st.text_input(
-            "Full Name"
+    with st.form("register_form", clear_on_submit=False):
+        name = st.text_input(
+            "Full Name",
+            placeholder="Piyush Raj",
         )
 
-        st.text_input(
-            "Email"
+        email = st.text_input(
+            "Email",
+            placeholder="you@example.com",
         )
 
-        st.text_input(
+        password = st.text_input(
             "Password",
             type="password",
+            placeholder="Minimum 8 characters",
         )
 
-        st.text_input(
+        confirm_password = st.text_input(
             "Confirm Password",
             type="password",
+            placeholder="Re-enter your password",
         )
 
         submitted = st.form_submit_button(
-            "Register",
+            "Create Account",
             type="primary",
             width="stretch",
         )
 
     if submitted:
+        clean_name = " ".join(name.strip().split())
+        normalized_email = normalize_email(email)
 
-        st.success(
-            "Registration interface is ready. Connect your authentication backend here."
+        if not clean_name:
+            st.error("Please enter your full name.")
+            return
+
+        if len(clean_name) < 2:
+            st.error("Please enter a valid name.")
+            return
+
+        if not normalized_email:
+            st.error("Please enter your email address.")
+            return
+
+        if not valid_email(normalized_email):
+            st.error("Please enter a valid email address.")
+            return
+
+        if len(password) < 8:
+            st.error("Password must be at least 8 characters long.")
+            return
+
+        if password != confirm_password:
+            st.error("Passwords do not match.")
+            return
+
+        if get_user_by_email(normalized_email):
+            st.error(
+                "An account with this email already exists. "
+                "Please use Login instead."
+            )
+            return
+
+        user = create_user(
+            clean_name,
+            normalized_email,
+            password,
         )
+
+        if user:
+            set_logged_in(user)
+            st.success(
+                "Account created successfully. "
+                "Welcome to DataMind AI!"
+            )
+            st.switch_page(PAGES["home"])
+        else:
+            st.error(
+                "This email is already registered. "
+                "Please use Login instead."
+            )
 
 
 # ============================================================
@@ -1049,7 +1333,7 @@ def help_page():
 # NAVIGATION
 # ============================================================
 
-PAGES = {
+PAGES.update({
 
     # IMPORTANT:
     # No url_path is specified for Home so that Home becomes
@@ -1117,7 +1401,7 @@ PAGES = {
         icon=":material/person_add:",
         url_path="register",
     ),
-}
+})
 
 
 # ============================================================
@@ -1236,69 +1520,70 @@ with st.sidebar:
     # --------------------------------------------------------
 
     st.markdown(
+        '<div class="dm-sidebar-divider dm-sidebar-divider-lower"></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
         '<div class="dm-auth-links-title">ACCOUNT</div>',
         unsafe_allow_html=True,
     )
 
-    auth_cols = st.columns(
-        2,
-        gap="small",
-    )
+    if st.session_state.logged_in:
+        safe_name = html.escape(st.session_state.user_name or "User")
+        safe_email = html.escape(st.session_state.user_email or "")
+        initials = html.escape(get_initials(st.session_state.user_name or "User"))
 
-    with auth_cols[0]:
-
-        st.page_link(
-            PAGES["login"],
-            label="Login",
-            icon=":material/login:",
-            width="stretch",
+        st.html(
+            f"""
+            <div class="dm-profile">
+                <div class="dm-avatar">{initials}</div>
+                <div class="dm-profile-text">
+                    <div class="dm-profile-name">{safe_name}</div>
+                    <div class="dm-profile-email">{safe_email}</div>
+                </div>
+            </div>
+            """
         )
 
-    with auth_cols[1]:
-
-        st.page_link(
-            PAGES["register"],
-            label="Register",
-            icon=":material/person_add:",
+        if st.button(
+            "Log Out",
+            key="logout_button",
             width="stretch",
+        ):
+            logout_user()
+
+    else:
+        st.html(
+            """
+            <div class="dm-guest">
+                <div class="dm-avatar dm-avatar-guest">GU</div>
+                <div class="dm-profile-text">
+                    <div class="dm-profile-name">Guest</div>
+                    <div class="dm-profile-email">Not signed in</div>
+                </div>
+            </div>
+            """
         )
 
-    # --------------------------------------------------------
-    # PROFILE
-    # --------------------------------------------------------
+        auth_cols = st.columns(2, gap="small")
 
-    st.markdown(
-        '<div class="dm-sidebar-profile-space"></div>',
-        unsafe_allow_html=True,
-    )
+        with auth_cols[0]:
+            st.page_link(
+                PAGES["login"],
+                label="Login",
+                icon=":material/login:",
+                width="stretch",
+            )
 
-    st.html(
-        """
-        <div class="dm-profile">
+        with auth_cols[1]:
+            st.page_link(
+                PAGES["register"],
+                label="Register",
+                icon=":material/person_add:",
+                width="stretch",
+            )
 
-            <div class="dm-avatar">
-                P
-            </div>
-
-            <div class="dm-profile-text">
-
-                <div class="dm-profile-name">
-                    Piyush Raj
-                </div>
-
-                <div class="dm-profile-role">
-                    Pro User
-                </div>
-
-            </div>
-
-            <div class="dm-profile-arrow">
-                ↪
-            </div>
-
-        </div>
-        """
-    )
 
 
 # ============================================================
