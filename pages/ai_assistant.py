@@ -11,11 +11,12 @@ from google import genai
 # ============================================================
 # IMPORTANT:
 # This page is loaded through app.py.
+#
 # Therefore:
 # - No st.set_page_config() here
 # - No custom sidebar here
-# - app.py controls the global sidebar/navigation
-# - main.css controls the common DataMind AI UI
+# - app.py controls global navigation
+# - main.css controls common DataMind AI styling
 # ============================================================
 
 
@@ -78,12 +79,15 @@ st.html(
                 transparent 42%
             ),
             rgba(255, 255, 255, 0.72);
+
         border: 1px solid #e9d5ff;
         border-radius: 20px;
         padding: 38px 25px;
         text-align: center;
         margin: 25px 0;
-        box-shadow: 0 12px 32px rgba(71, 85, 105, 0.055);
+
+        box-shadow:
+            0 12px 32px rgba(71, 85, 105, 0.055);
     }
 
     .assistant-welcome-title {
@@ -102,13 +106,9 @@ st.html(
         font-size: 14px;
     }
 
+
     /* ========================================================
        QUICK PROMPT BUTTONS
-       ------------------------------------------------------
-       main.css gives buttons a purple gradient background but
-       does not set a contrasting label color, so the text was
-       nearly invisible. Force it here, scoped to just these
-       buttons via the container key.
        ======================================================== */
 
     .st-key-quick_prompts button {
@@ -121,6 +121,7 @@ st.html(
         color: #ffffff !important;
         font-weight: 700 !important;
     }
+
 
     /* ========================================================
        CHAT AREA
@@ -151,16 +152,35 @@ st.html(
 
 load_dotenv()
 
-API_KEY = os.getenv("GEMINI_API_KEY")
 
-MODEL_NAME = os.getenv(
-    "GEMINI_MODEL",
-    "gemini-3.6-flash",
-)
+# ============================================================
+# LOAD GEMINI API KEY
+# ============================================================
+# Priority:
+# 1. Streamlit Secrets
+# 2. Environment variable / .env
+#
+# This is important because Streamlit Cloud uses Secrets.
+# ============================================================
+
+API_KEY = None
+
+try:
+    API_KEY = st.secrets.get("GEMINI_API_KEY")
+except Exception:
+    API_KEY = None
+
+
+if not API_KEY:
+    API_KEY = os.getenv("GEMINI_API_KEY")
+
+
+if API_KEY:
+    API_KEY = str(API_KEY).strip()
 
 
 # ============================================================
-# GEMINI CLIENT
+# CHECK API KEY
 # ============================================================
 
 if not API_KEY:
@@ -170,11 +190,53 @@ if not API_KEY:
     )
 
     st.info(
-        "Please add GEMINI_API_KEY to your .env file."
+        "Please add GEMINI_API_KEY to Streamlit Secrets."
     )
 
     st.stop()
 
+
+# ============================================================
+# MODEL CONFIGURATION
+# ============================================================
+
+MODEL_NAME = os.getenv(
+    "GEMINI_MODEL",
+    "gemini-3.6-flash",
+).strip()
+
+
+# ============================================================
+# FALLBACK MODELS
+# ============================================================
+# If the selected model returns a temporary 503 error,
+# DataMind AI will automatically try another stable model.
+#
+# The order is:
+#
+# 1. Your configured model
+# 2. Gemini 3.5 Flash
+# 3. Gemini 3.7 Flash
+# 4. Gemini 3.8 Flash
+#
+# Duplicate models are removed automatically.
+# ============================================================
+
+MODEL_CANDIDATES = [
+    MODEL_NAME,
+    "gemini-3.5-flash",
+    "gemini-3.7-flash",
+    "gemini-3.8-flash",
+]
+
+MODEL_CANDIDATES = list(
+    dict.fromkeys(MODEL_CANDIDATES)
+)
+
+
+# ============================================================
+# GEMINI CLIENT
+# ============================================================
 
 try:
 
@@ -197,6 +259,7 @@ except Exception as error:
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+
 
 if "pending_prompt" not in st.session_state:
     st.session_state.pending_prompt = None
@@ -324,6 +387,7 @@ def generate_answer(user_prompt):
         conversation
     )
 
+
     # --------------------------------------------------------
     # CREATE PROMPT
     # --------------------------------------------------------
@@ -333,70 +397,151 @@ def generate_answer(user_prompt):
         conversation_text,
     )
 
+
     # --------------------------------------------------------
-    # GENERATE RESPONSE
+    # TRY GEMINI MODELS
+    # --------------------------------------------------------
+    #
+    # The SDK already retries temporary 5xx errors.
+    # If the configured model still returns 503,
+    # we try another available Flash model.
     # --------------------------------------------------------
 
-    try:
+    last_error = None
+    successful_model = None
+    response = None
 
-        with st.spinner(
-            "DataMind AI is analyzing your question..."
-        ):
+    with st.spinner(
+        "DataMind AI is analyzing your question..."
+    ):
 
-            response = client.models.generate_content(
-                model=MODEL_NAME,
-                contents=prompt,
+        for model_name in MODEL_CANDIDATES:
+
+            try:
+
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                )
+
+                if response is not None:
+
+                    answer = getattr(
+                        response,
+                        "text",
+                        None,
+                    )
+
+                    if answer:
+
+                        successful_model = model_name
+                        break
+
+                    last_error = RuntimeError(
+                        f"{model_name} returned an empty response."
+                    )
+
+            except Exception as error:
+
+                last_error = error
+
+                error_text = str(error).upper()
+
+                # ------------------------------------------------
+                # ONLY FALL BACK FOR TEMPORARY SERVER/CAPACITY
+                # ERRORS.
+                #
+                # Authentication, permission, invalid model,
+                # etc. should NOT silently switch models.
+                # ------------------------------------------------
+
+                if (
+                    "503" not in error_text
+                    and "UNAVAILABLE" not in error_text
+                    and "500" not in error_text
+                    and "502" not in error_text
+                    and "504" not in error_text
+                ):
+
+                    raise error
+
+
+    # ========================================================
+    # NO MODEL WORKED
+    # ========================================================
+
+    if response is None or successful_model is None:
+
+        if last_error:
+
+            st.error(
+                "AI response could not be generated.\n\n"
+                f"Gemini temporarily unavailable after trying "
+                f"{len(MODEL_CANDIDATES)} models.\n\n"
+                f"Last error: {last_error}"
             )
 
-        if response is None:
+        else:
 
-            raise RuntimeError(
+            st.error(
                 "Gemini returned no response."
             )
 
-        answer = getattr(
-            response,
-            "text",
-            None,
-        )
+        return
 
-        if not answer:
 
-            raise RuntimeError(
-                "Gemini returned an empty response."
-            )
+    # ========================================================
+    # GET RESPONSE TEXT
+    # ========================================================
 
-        answer = answer.strip()
+    answer = getattr(
+        response,
+        "text",
+        None,
+    )
 
-        # ----------------------------------------------------
-        # SAVE USER MESSAGE
-        # ----------------------------------------------------
 
-        st.session_state.chat_history.append(
-            {
-                "role": "user",
-                "content": user_prompt,
-            }
-        )
-
-        # ----------------------------------------------------
-        # SAVE AI MESSAGE
-        # ----------------------------------------------------
-
-        st.session_state.chat_history.append(
-            {
-                "role": "assistant",
-                "content": answer,
-            }
-        )
-
-        st.rerun()
-
-    except Exception as error:
+    if not answer:
 
         st.error(
-            f"AI response could not be generated: {error}"
+            "Gemini returned an empty response."
         )
+
+        return
+
+
+    answer = answer.strip()
+
+
+    # ========================================================
+    # SAVE USER MESSAGE
+    # ========================================================
+
+    st.session_state.chat_history.append(
+        {
+            "role": "user",
+            "content": user_prompt,
+        }
+    )
+
+
+    # ========================================================
+    # SAVE AI MESSAGE
+    # ========================================================
+
+    st.session_state.chat_history.append(
+        {
+            "role": "assistant",
+            "content": answer,
+        }
+    )
+
+
+    # ========================================================
+    # RERUN TO DISPLAY CHAT
+    # ========================================================
+
+    st.rerun()
 
 
 # ============================================================
@@ -459,12 +604,22 @@ if not st.session_state.chat_history:
         """
     )
 
+
+    # --------------------------------------------------------
+    # QUICK PROMPTS
+    # --------------------------------------------------------
+
     with st.container(key="quick_prompts"):
 
         prompt_col1, prompt_col2 = st.columns(
             2,
             gap="medium",
         )
+
+
+        # ====================================================
+        # LEFT COLUMN
+        # ====================================================
 
         with prompt_col1:
 
@@ -480,6 +635,7 @@ if not st.session_state.chat_history:
 
                 st.rerun()
 
+
             if st.button(
                 "How do I create a KPI in Power BI?",
                 use_container_width=True,
@@ -492,6 +648,11 @@ if not st.session_state.chat_history:
                 )
 
                 st.rerun()
+
+
+        # ====================================================
+        # RIGHT COLUMN
+        # ====================================================
 
         with prompt_col2:
 
@@ -506,6 +667,7 @@ if not st.session_state.chat_history:
                 )
 
                 st.rerun()
+
 
             if st.button(
                 "How do I handle missing values?",
