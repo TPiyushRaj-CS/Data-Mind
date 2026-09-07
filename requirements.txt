@@ -8,3 +8,5 @@ google-genai
 python-dotenv
 reportlab
 pypdf
+sentence-transformers
+scikit-learn
