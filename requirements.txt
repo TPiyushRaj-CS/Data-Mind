@@ -1,0 +1,39 @@
+streamlit
+pandas
+numpy
+plotly
+openpyxl
+statsmodels
+google-genai
+python-dotenv
+reportlab
+
+Files Structure 
+
+DataMind AI/
+│
+├── modules/
+│   ├── ai_cleaning.py
+│   ├── ai_insights.py
+│   ├── ai_visualization.py
+│   ├── chart_generator.py
+│   ├── data_cleaner.py
+│   ├── embeddings.py
+│   ├── pdf_processor.py
+│   ├── pdf_rag.py
+│   ├── report_generator.py
+│   └── visualization.py
+│
+├── pages/
+│   ├── ai_assistant.py
+│   ├── ai_dashboard.py
+│   ├── data_analyst.py
+│   └── pdf_intelligence.py
+│
+├── styles/
+│   └── main.css
+│
+├── .env
+├── .gitignore
+├── app.py
+└── requirements.txt
