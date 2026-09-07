@@ -7,3 +7,4 @@ statsmodels
 google-genai
 python-dotenv
 reportlab
+pypdf
