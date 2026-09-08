@@ -5,8 +5,12 @@ import hmac
 import html
 import re
 import secrets
+import smtplib
+import ssl
 import sqlite3
 from datetime import datetime, timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 
 # ============================================================
@@ -214,6 +218,83 @@ def valid_email(email):
             email.strip(),
         )
     )
+
+
+# ============================================================
+# ERROR REPORTING (SENDS AN EMAIL TO THE DEVELOPER)
+# ============================================================
+# Configure this by creating a file at:
+#   .streamlit/secrets.toml
+#
+# with the following content (Gmail example):
+#
+#   [email]
+#   SMTP_HOST = "smtp.gmail.com"
+#   SMTP_PORT = 587
+#   SMTP_USER = "youraddress@gmail.com"
+#   SMTP_PASSWORD = "your-16-char-app-password"
+#   REPORT_TO_EMAIL = "youraddress@gmail.com"
+#
+# For Gmail you must use an "App Password", not your normal
+# account password (Google Account -> Security -> App passwords).
+# Any other SMTP provider (Outlook, SendGrid SMTP, Zoho, a custom
+# mail server, etc.) works the same way — just change the host/port.
+
+def send_error_report(description, contact_email=""):
+    """Email a user-submitted problem report to the developer.
+
+    Returns a tuple of (success: bool, message: str) so the caller
+    can show the right feedback to the user.
+    """
+
+    try:
+        email_secrets = st.secrets["email"]
+        smtp_host = email_secrets["SMTP_HOST"]
+        smtp_port = int(email_secrets["SMTP_PORT"])
+        smtp_user = email_secrets["SMTP_USER"]
+        smtp_password = email_secrets["SMTP_PASSWORD"]
+        recipient = email_secrets["REPORT_TO_EMAIL"]
+    except Exception:
+        return False, (
+            "Error reporting isn't configured yet. Add SMTP details to "
+            ".streamlit/secrets.toml (see the comment above "
+            "send_error_report in app.py) to enable this feature."
+        )
+
+    reporter_name = st.session_state.get("user_name") or "Guest"
+    reporter_account_email = st.session_state.get("user_email") or "Not signed in"
+
+    message = MIMEMultipart()
+    message["From"] = smtp_user
+    message["To"] = recipient
+    message["Subject"] = f"DataMind AI \u2013 Problem report from {reporter_name}"
+
+    if contact_email.strip():
+        message["Reply-To"] = contact_email.strip()
+
+    body = (
+        "A user submitted a problem report from DataMind AI.\n\n"
+        f"Reported by: {reporter_name}\n"
+        f"Account email: {reporter_account_email}\n"
+        f"Reply-to contact given: {contact_email.strip() or 'Not provided'}\n"
+        f"Submitted at (UTC): {datetime.now(timezone.utc).isoformat()}\n\n"
+        "Description of the issue:\n"
+        f"{description}\n"
+    )
+
+    message.attach(MIMEText(body, "plain"))
+
+    try:
+        context = ssl.create_default_context()
+
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls(context=context)
+            server.login(smtp_user, smtp_password)
+            server.sendmail(smtp_user, recipient, message.as_string())
+
+        return True, "Thanks — your report was sent. We'll take a look shortly."
+    except Exception as exc:
+        return False, f"We couldn't send that report right now ({exc})."
 
 
 # Create the local database and initialize the current visitor as Guest.
@@ -500,6 +581,188 @@ st.html(
 
     }
 
+    /* ========================================================
+       FIX: FULL-WIDTH MAIN CONTENT WHEN THE SIDEBAR IS COLLAPSED
+       Streamlit marks the collapsed sidebar with
+       aria-expanded="false" — we use that to force the sidebar
+       to 0 width and the main content to fill 100% instead of
+       leaving a blank gap where the sidebar used to be.
+       ======================================================== */
+
+    section[data-testid="stSidebar"] {
+        transition: width 0.25s ease, min-width 0.25s ease,
+            margin-left 0.25s ease;
+    }
+
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        width: 0px !important;
+        min-width: 0px !important;
+        margin-left: -1rem !important;
+        overflow: hidden !important;
+    }
+
+    div[data-testid="stAppViewContainer"],
+    section[data-testid="stMain"],
+    div[data-testid="stMain"],
+    div[data-testid="stAppViewContainer"] > .main {
+        transition: margin-left 0.25s ease, width 0.25s ease,
+            max-width 0.25s ease;
+    }
+
+    section[data-testid="stSidebar"][aria-expanded="false"]
+        ~ section[data-testid="stMain"],
+    section[data-testid="stSidebar"][aria-expanded="false"]
+        + section[data-testid="stMain"],
+    section[data-testid="stSidebar"][aria-expanded="false"]
+        ~ div[data-testid="stMain"],
+    section[data-testid="stSidebar"][aria-expanded="false"]
+        + div[data-testid="stMain"] {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    div[data-testid="stAppViewContainer"] {
+        width: 100% !important;
+    }
+
+    /* Keep the little expand ("»") control from floating in dead
+       space once the content behind it is full width. */
+    [data-testid="collapsedControl"] {
+        left: 0.4rem !important;
+        top: 0.6rem !important;
+    }
+
+    /* ========================================================
+       AUTH PAGES (LOGIN / REGISTER) — REDESIGNED
+       ======================================================== */
+
+    .dm-auth-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 36px 12px 8px 12px;
+    }
+
+    .dm-auth-card-v2 {
+        width: 100%;
+        max-width: 440px;
+        margin: 0 auto;
+        padding: 42px 38px 30px 38px;
+        border-radius: 26px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #ece9f9;
+        box-shadow: 0 26px 60px rgba(76, 29, 149, 0.14);
+    }
+
+    .dm-auth-badge {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 18px auto;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 22px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #8b5cf6, #6366f1);
+        box-shadow: 0 12px 26px rgba(99, 102, 241, 0.35);
+    }
+
+    .dm-auth-card-v2 .dm-eyebrow {
+        color: #7c3aed;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.09em;
+        margin-bottom: 6px;
+    }
+
+    .dm-auth-card-v2 h1 {
+        margin: 4px 0 8px 0;
+        font-size: 27px;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    .dm-auth-card-v2 p {
+        margin: 0;
+        color: #64748b;
+        font-size: 13.5px;
+        line-height: 1.55;
+    }
+
+    .dm-auth-switch-row {
+        max-width: 440px;
+        margin: 18px auto 0 auto;
+        text-align: center;
+        color: #64748b;
+        font-size: 13.5px;
+    }
+
+    /* Nicer text inputs and primary buttons app-wide, which also
+       covers the login / register forms. */
+    div[data-testid="stTextInput"] input {
+        border-radius: 12px !important;
+        border: 1px solid #e2e0ee !important;
+        padding: 10px 14px !important;
+        background: #fbfaff !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    div[data-testid="stTextInput"] input:focus {
+        border-color: #8b5cf6 !important;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+        outline: none !important;
+    }
+
+    div[data-testid="stFormSubmitButton"] button[kind="primary"] {
+        border-radius: 12px !important;
+        border: none !important;
+        font-weight: 700 !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+        box-shadow: 0 12px 26px rgba(99, 102, 241, 0.3) !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    div[data-testid="stFormSubmitButton"] button[kind="primary"]:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 30px rgba(99, 102, 241, 0.38) !important;
+    }
+
+    /* ========================================================
+       HELP & SUPPORT — REPORT A PROBLEM SECTION
+       ======================================================== */
+
+    .dm-report-card {
+        margin-top: 36px;
+        padding: 28px;
+        border-radius: 22px;
+        background:
+            linear-gradient(
+                135deg,
+                rgba(245, 243, 255, 0.9),
+                rgba(238, 242, 255, 0.85)
+            );
+        border: 1px solid #ddd6fe;
+    }
+
+    .dm-report-card h2 {
+        margin: 0 0 6px 0;
+        font-size: 19px;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    .dm-report-card p {
+        margin: 0;
+        color: #64748b;
+        font-size: 13.5px;
+    }
+
     </style>
     """
 )
@@ -736,25 +999,25 @@ def home_page():
     # --------------------------------------------------------
     # WORKSPACE SECTION HEADING
     # --------------------------------------------------------
-    
+
     st.html(
         """
         <div class="dm-section-heading">
-    
+
             <h2>
                 Explore Your Workspace
             </h2>
-    
+
             <p>
                 Choose a tool and start working with your data.
             </p>
-    
+
         </div>
         """
     )
-    
-    
-    
+
+
+
     # --------------------------------------------------------
     # WORKSPACE CARDS
     # --------------------------------------------------------
@@ -1046,7 +1309,6 @@ def home_page():
     )
 
 
-    
 
 
 # ============================================================
@@ -1060,8 +1322,9 @@ def login_page():
 
     st.html(
         """
-        <div class="dm-auth-wrap">
-            <div class="dm-auth-card">
+        <div class="dm-auth-page">
+            <div class="dm-auth-card-v2">
+                <div class="dm-auth-badge">D</div>
                 <div class="dm-eyebrow">
                     DATAMIND AI
                 </div>
@@ -1076,41 +1339,56 @@ def login_page():
         """
     )
 
-    with st.form("login_form", clear_on_submit=False):
-        email = st.text_input(
-            "Email",
-            placeholder="you@example.com",
+    _, form_col, _ = st.columns([1, 1.4, 1])
+
+    with form_col:
+        with st.form("login_form", clear_on_submit=False):
+            email = st.text_input(
+                "Email",
+                placeholder="you@example.com",
+            )
+
+            password = st.text_input(
+                "Password",
+                type="password",
+                placeholder="Enter your password",
+            )
+
+            submitted = st.form_submit_button(
+                "Login",
+                type="primary",
+                width="stretch",
+            )
+
+        if submitted:
+            if not email.strip() or not password:
+                st.error("Please enter your email and password.")
+            elif not valid_email(email):
+                st.error("Please enter a valid email address.")
+            else:
+                user = authenticate_user(email, password)
+
+                if user:
+                    set_logged_in(user)
+                    st.success("Login successful. Welcome back!")
+                    st.switch_page(PAGES["home"])
+                else:
+                    st.error("Invalid email or password. Please try again.")
+
+        st.html(
+            """
+            <div class="dm-auth-switch-row">
+                New to DataMind AI?
+            </div>
+            """
         )
 
-        password = st.text_input(
-            "Password",
-            type="password",
-            placeholder="Enter your password",
-        )
-
-        submitted = st.form_submit_button(
-            "Login",
-            type="primary",
+        st.page_link(
+            PAGES["register"],
+            label="Create an account",
+            icon=":material/person_add:",
             width="stretch",
         )
-
-    if submitted:
-        if not email.strip() or not password:
-            st.error("Please enter your email and password.")
-            return
-
-        if not valid_email(email):
-            st.error("Please enter a valid email address.")
-            return
-
-        user = authenticate_user(email, password)
-
-        if user:
-            set_logged_in(user)
-            st.success("Login successful. Welcome back!")
-            st.switch_page(PAGES["home"])
-        else:
-            st.error("Invalid email or password. Please try again.")
 
 
 # ============================================================
@@ -1124,8 +1402,9 @@ def register_page():
 
     st.html(
         """
-        <div class="dm-auth-wrap">
-            <div class="dm-auth-card">
+        <div class="dm-auth-page">
+            <div class="dm-auth-card-v2">
+                <div class="dm-auth-badge">D</div>
                 <div class="dm-eyebrow">
                     DATAMIND AI
                 </div>
@@ -1141,88 +1420,93 @@ def register_page():
         """
     )
 
-    with st.form("register_form", clear_on_submit=False):
-        name = st.text_input(
-            "Full Name",
-            placeholder="Piyush Raj",
+    _, form_col, _ = st.columns([1, 1.4, 1])
+
+    with form_col:
+        with st.form("register_form", clear_on_submit=False):
+            name = st.text_input(
+                "Full Name",
+                placeholder="Piyush Raj",
+            )
+
+            email = st.text_input(
+                "Email",
+                placeholder="you@example.com",
+            )
+
+            password = st.text_input(
+                "Password",
+                type="password",
+                placeholder="Minimum 8 characters",
+            )
+
+            confirm_password = st.text_input(
+                "Confirm Password",
+                type="password",
+                placeholder="Re-enter your password",
+            )
+
+            submitted = st.form_submit_button(
+                "Create Account",
+                type="primary",
+                width="stretch",
+            )
+
+        if submitted:
+            clean_name = " ".join(name.strip().split())
+            normalized_email = normalize_email(email)
+
+            if not clean_name:
+                st.error("Please enter your full name.")
+            elif len(clean_name) < 2:
+                st.error("Please enter a valid name.")
+            elif not normalized_email:
+                st.error("Please enter your email address.")
+            elif not valid_email(normalized_email):
+                st.error("Please enter a valid email address.")
+            elif len(password) < 8:
+                st.error("Password must be at least 8 characters long.")
+            elif password != confirm_password:
+                st.error("Passwords do not match.")
+            elif get_user_by_email(normalized_email):
+                st.error(
+                    "An account with this email already exists. "
+                    "Please use Login instead."
+                )
+            else:
+                user = create_user(
+                    clean_name,
+                    normalized_email,
+                    password,
+                )
+
+                if user:
+                    set_logged_in(user)
+                    st.success(
+                        "Account created successfully. "
+                        "Welcome to DataMind AI!"
+                    )
+                    st.switch_page(PAGES["home"])
+                else:
+                    st.error(
+                        "This email is already registered. "
+                        "Please use Login instead."
+                    )
+
+        st.html(
+            """
+            <div class="dm-auth-switch-row">
+                Already have an account?
+            </div>
+            """
         )
 
-        email = st.text_input(
-            "Email",
-            placeholder="you@example.com",
-        )
-
-        password = st.text_input(
-            "Password",
-            type="password",
-            placeholder="Minimum 8 characters",
-        )
-
-        confirm_password = st.text_input(
-            "Confirm Password",
-            type="password",
-            placeholder="Re-enter your password",
-        )
-
-        submitted = st.form_submit_button(
-            "Create Account",
-            type="primary",
+        st.page_link(
+            PAGES["login"],
+            label="Log in instead",
+            icon=":material/login:",
             width="stretch",
         )
-
-    if submitted:
-        clean_name = " ".join(name.strip().split())
-        normalized_email = normalize_email(email)
-
-        if not clean_name:
-            st.error("Please enter your full name.")
-            return
-
-        if len(clean_name) < 2:
-            st.error("Please enter a valid name.")
-            return
-
-        if not normalized_email:
-            st.error("Please enter your email address.")
-            return
-
-        if not valid_email(normalized_email):
-            st.error("Please enter a valid email address.")
-            return
-
-        if len(password) < 8:
-            st.error("Password must be at least 8 characters long.")
-            return
-
-        if password != confirm_password:
-            st.error("Passwords do not match.")
-            return
-
-        if get_user_by_email(normalized_email):
-            st.error(
-                "An account with this email already exists. "
-                "Please use Login instead."
-            )
-            return
-
-        user = create_user(
-            clean_name,
-            normalized_email,
-            password,
-        )
-
-        if user:
-            set_logged_in(user)
-            st.success(
-                "Account created successfully. "
-                "Welcome to DataMind AI!"
-            )
-            st.switch_page(PAGES["home"])
-        else:
-            st.error(
-                "This email is already registered. "
-                "Please use Login instead."
-            )
 
 
 # ============================================================
@@ -1272,6 +1556,29 @@ def settings_page():
             "Comfortable",
             "Compact",
         ],
+    )
+
+    # --------------------------------------------------------
+    # POINTER TO ERROR REPORTING
+    # --------------------------------------------------------
+
+    st.html(
+        """
+        <div class="dm-report-card">
+            <h2>Found a bug or something not working?</h2>
+            <p>
+                Send a report from the Help &amp; Support page and it
+                will be emailed straight to the DataMind AI team.
+            </p>
+        </div>
+        """
+    )
+
+    st.page_link(
+        PAGES["help"],
+        label="Go to Help & Support",
+        icon=":material/help_outline:",
+        width="stretch",
     )
 
 
@@ -1327,6 +1634,137 @@ def help_page():
             "Upload a PDF, let DataMind AI index it, "
             "then search or ask questions about the document."
         )
+
+    
+# ============================================================
+# HELP PAGE
+# ============================================================
+
+def help_page():
+
+    # --------------------------------------------------------
+    # PAGE HEADER
+    # --------------------------------------------------------
+
+    st.html(
+        """
+        <div class="dm-page-heading">
+            <div class="dm-eyebrow">
+                DATAMIND AI
+            </div>
+
+            <h1>
+                Help & Support
+            </h1>
+
+            <p>
+                Find guidance for using the DataMind AI workspace
+                or report a problem if something isn't working correctly.
+            </p>
+        </div>
+        """
+    )
+
+    # --------------------------------------------------------
+    # FREQUENTLY ASKED QUESTIONS
+    # --------------------------------------------------------
+
+    with st.expander(
+        "How do I upload data?",
+        expanded=True,
+    ):
+        st.write(
+            "Open Data Analyst or AI Dashboard and upload a CSV or Excel file."
+        )
+
+    with st.expander(
+        "How do I use the AI Assistant?"
+    ):
+        st.write(
+            "Open AI Assistant, optionally upload a dataset, "
+            "and ask your question in natural language."
+        )
+
+    with st.expander(
+        "How does PDF Intelligence work?"
+    ):
+        st.write(
+            "Upload a PDF, let DataMind AI index it, "
+            "then search or ask questions about the document."
+        )
+
+    # --------------------------------------------------------
+    # REPORT A PROBLEM
+    # --------------------------------------------------------
+
+    st.html(
+        """
+        <div class="dm-report-card">
+            <h2>Report a Problem</h2>
+
+            <p>
+                Running into an error or something looks broken?
+                Describe the problem below and we'll get an email right away.
+            </p>
+        </div>
+        """
+    )
+
+    # --------------------------------------------------------
+    # PROBLEM REPORT FORM
+    # --------------------------------------------------------
+
+    with st.form(
+        "error_report_form",
+        clear_on_submit=True,
+    ):
+
+        error_description = st.text_area(
+            "What went wrong?",
+            placeholder=(
+                "Describe the issue — what you were doing, "
+                "what you expected, and what happened instead."
+            ),
+            height=160,
+        )
+
+        report_submitted = st.form_submit_button(
+            "Send Report",
+            type="primary",
+            width="stretch",
+        )
+
+    # --------------------------------------------------------
+    # HANDLE REPORT SUBMISSION
+    # --------------------------------------------------------
+
+    if report_submitted:
+
+        if not error_description.strip():
+
+            st.error(
+                "Please describe the issue before sending."
+            )
+
+        else:
+
+            with st.spinner(
+                "Sending your report..."
+            ):
+
+                success, feedback = send_error_report(
+                    error_description.strip()
+                )
+
+            if success:
+
+                st.success(feedback)
+
+            else:
+
+                st.error(feedback)
+
+
 
 
 # ============================================================
