@@ -10,3 +10,4 @@ reportlab
 pypdf
 sentence-transformers
 scikit-learn
+groq
