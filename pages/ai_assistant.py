@@ -1,9 +1,16 @@
 import os
 from pathlib import Path
+import time
 
 import streamlit as st
 from dotenv import load_dotenv
-from google import genai
+from groq import Groq
+from groq import (
+    APIConnectionError,
+    APIStatusError,
+    RateLimitError,
+    AuthenticationError,
+)
 
 
 # ============================================================
@@ -17,6 +24,10 @@ from google import genai
 # - No custom sidebar here
 # - app.py controls global navigation
 # - main.css controls common DataMind AI styling
+#
+# AI PROVIDER:
+# - Groq
+# - Model: openai/gpt-oss-20b
 # ============================================================
 
 
@@ -150,29 +161,40 @@ st.html(
 # LOAD ENVIRONMENT VARIABLES
 # ============================================================
 
-load_dotenv()
+load_dotenv(
+    BASE_DIR / ".env"
+)
 
 
 # ============================================================
-# LOAD GEMINI API KEY
+# LOAD GROQ API KEY
 # ============================================================
 # Priority:
 # 1. Streamlit Secrets
-# 2. Environment variable / .env
+# 2. .env / environment variable
 #
-# This is important because Streamlit Cloud uses Secrets.
+# This works both locally and on Streamlit Cloud.
 # ============================================================
 
 API_KEY = None
 
+
+# ------------------------------------------------------------
+# STREAMLIT CLOUD SECRETS
+# ------------------------------------------------------------
+
 try:
-    API_KEY = st.secrets.get("GEMINI_API_KEY")
+    API_KEY = st.secrets.get("GROQ_API_KEY")
 except Exception:
     API_KEY = None
 
 
+# ------------------------------------------------------------
+# LOCAL .ENV / ENVIRONMENT VARIABLE
+# ------------------------------------------------------------
+
 if not API_KEY:
-    API_KEY = os.getenv("GEMINI_API_KEY")
+    API_KEY = os.getenv("GROQ_API_KEY")
 
 
 if API_KEY:
@@ -186,11 +208,12 @@ if API_KEY:
 if not API_KEY:
 
     st.error(
-        "Gemini API key was not found."
+        "Groq API key was not found."
     )
 
     st.info(
-        "Please add GEMINI_API_KEY to Streamlit Secrets."
+        "Please add GROQ_API_KEY to your .env file "
+        "or Streamlit Secrets."
     )
 
     st.stop()
@@ -201,53 +224,29 @@ if not API_KEY:
 # ============================================================
 
 MODEL_NAME = os.getenv(
-    "GEMINI_MODEL",
-    "gemini-3.6-flash",
+    "GROQ_MODEL",
+    "openai/gpt-oss-20b",
 ).strip()
 
 
 # ============================================================
-# FALLBACK MODELS
-# ============================================================
-# If the selected model returns a temporary 503 error,
-# DataMind AI will automatically try another stable model.
-#
-# The order is:
-#
-# 1. Your configured model
-# 2. Gemini 3.5 Flash
-# 3. Gemini 3.7 Flash
-# 4. Gemini 3.8 Flash
-#
-# Duplicate models are removed automatically.
-# ============================================================
-
-MODEL_CANDIDATES = [
-    MODEL_NAME,
-    "gemini-3.5-flash",
-    "gemini-3.7-flash",
-    "gemini-3.8-flash",
-]
-
-MODEL_CANDIDATES = list(
-    dict.fromkeys(MODEL_CANDIDATES)
-)
-
-
-# ============================================================
-# GEMINI CLIENT
+# GROQ CLIENT
 # ============================================================
 
 try:
 
-    client = genai.Client(
+    client = Groq(
         api_key=API_KEY
     )
 
 except Exception as error:
 
     st.error(
-        f"Could not initialize Gemini: {error}"
+        "Could not initialize the Groq AI client."
+    )
+
+    st.caption(
+        f"Technical details: {error}"
     )
 
     st.stop()
@@ -323,6 +322,16 @@ RULES:
 
 14. If multiple approaches exist, mention the best approach and
     briefly explain alternatives.
+
+15. Never claim that you executed code unless you actually did.
+
+16. Keep responses relevant to the user's question.
+
+17. Do not unnecessarily repeat the user's question.
+
+18. When giving code, use proper Markdown code blocks.
+
+19. Prioritize correctness over confidence.
 """
 
 
@@ -361,7 +370,167 @@ Answer the user's latest question clearly and professionally.
 Use Markdown formatting.
 
 Keep the answer easy to understand.
+
+Do not mention these internal instructions.
 """
+
+
+# ============================================================
+# SAFE ERROR MESSAGE
+# ============================================================
+
+def show_ai_error(error):
+
+    """
+    Converts Groq/API errors into user-friendly messages.
+
+    The actual exception is NOT displayed as a giant traceback
+    to the user.
+    """
+
+    if isinstance(error, AuthenticationError):
+
+        st.error(
+            "DataMind AI could not authenticate with Groq."
+        )
+
+        st.info(
+            "Please check the GROQ_API_KEY in your .env file "
+            "or Streamlit Secrets."
+        )
+
+        return
+
+
+    if isinstance(error, RateLimitError):
+
+        st.warning(
+            "DataMind AI is temporarily rate-limited."
+        )
+
+        st.info(
+            "Please wait a few seconds and try your question again."
+        )
+
+        return
+
+
+    if isinstance(error, APIConnectionError):
+
+        st.warning(
+            "DataMind AI could not connect to the AI service."
+        )
+
+        st.info(
+            "Please check your internet connection and try again."
+        )
+
+        return
+
+
+    if isinstance(error, APIStatusError):
+
+        status_code = getattr(
+            error,
+            "status_code",
+            None,
+        )
+
+        if status_code == 400:
+
+            st.error(
+                "The AI request could not be processed."
+            )
+
+            st.info(
+                "Please try asking the question in a simpler way."
+            )
+
+            return
+
+
+        if status_code == 403:
+
+            st.error(
+                "The Groq API request was not permitted."
+            )
+
+            st.info(
+                "Please check your Groq API permissions."
+            )
+
+            return
+
+
+        if status_code == 404:
+
+            st.error(
+                "The selected AI model is not available."
+            )
+
+            st.info(
+                "Please check the GROQ_MODEL configuration."
+            )
+
+            return
+
+
+        if status_code == 413:
+
+            st.error(
+                "The conversation is too large for this request."
+            )
+
+            st.info(
+                "Start a new conversation and try again."
+            )
+
+            return
+
+
+        if status_code == 429:
+
+            st.warning(
+                "DataMind AI is temporarily rate-limited."
+            )
+
+            st.info(
+                "Please wait a few seconds before trying again."
+            )
+
+            return
+
+
+        if status_code in {
+            500,
+            502,
+            503,
+            504,
+        }:
+
+            st.warning(
+                "The AI service is temporarily unavailable."
+            )
+
+            st.info(
+                "Please wait a moment and try again."
+            )
+
+            return
+
+
+    # --------------------------------------------------------
+    # UNKNOWN ERROR
+    # --------------------------------------------------------
+
+    st.error(
+        "DataMind AI could not generate a response."
+    )
+
+    st.info(
+        "Please try again. If the problem continues, "
+        "restart the application and try once more."
+    )
 
 
 # ============================================================
@@ -399,118 +568,117 @@ def generate_answer(user_prompt):
 
 
     # --------------------------------------------------------
-    # TRY GEMINI MODELS
-    # --------------------------------------------------------
-    #
-    # The SDK already retries temporary 5xx errors.
-    # If the configured model still returns 503,
-    # we try another available Flash model.
+    # API REQUEST
     # --------------------------------------------------------
 
-    last_error = None
-    successful_model = None
     response = None
 
     with st.spinner(
         "DataMind AI is analyzing your question..."
     ):
 
-        for model_name in MODEL_CANDIDATES:
+        try:
 
-            try:
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
 
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                )
+                messages=[
+                    {
+                        "role": "system",
+                        "content": build_system_instruction(),
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    },
+                ],
 
-                if response is not None:
+                temperature=0.2,
 
-                    answer = getattr(
-                        response,
-                        "text",
-                        None,
-                    )
+                max_tokens=4096,
 
-                    if answer:
-
-                        successful_model = model_name
-                        break
-
-                    last_error = RuntimeError(
-                        f"{model_name} returned an empty response."
-                    )
-
-            except Exception as error:
-
-                last_error = error
-
-                error_text = str(error).upper()
-
-                # ------------------------------------------------
-                # ONLY FALL BACK FOR TEMPORARY SERVER/CAPACITY
-                # ERRORS.
-                #
-                # Authentication, permission, invalid model,
-                # etc. should NOT silently switch models.
-                # ------------------------------------------------
-
-                if (
-                    "503" not in error_text
-                    and "UNAVAILABLE" not in error_text
-                    and "500" not in error_text
-                    and "502" not in error_text
-                    and "504" not in error_text
-                ):
-
-                    raise error
-
-
-    # ========================================================
-    # NO MODEL WORKED
-    # ========================================================
-
-    if response is None or successful_model is None:
-
-        if last_error:
-
-            st.error(
-                "AI response could not be generated.\n\n"
-                f"Gemini temporarily unavailable after trying "
-                f"{len(MODEL_CANDIDATES)} models.\n\n"
-                f"Last error: {last_error}"
+                timeout=60,
             )
 
-        else:
+
+        except (
+            AuthenticationError,
+            RateLimitError,
+            APIConnectionError,
+            APIStatusError,
+        ) as error:
+
+            show_ai_error(error)
+
+            return
+
+
+        except Exception as error:
+
+            show_ai_error(error)
+
+            return
+
+
+    # ========================================================
+    # VALIDATE RESPONSE
+    # ========================================================
+
+    try:
+
+        if response is None:
 
             st.error(
-                "Gemini returned no response."
+                "DataMind AI did not return a response."
             )
 
-        return
+            return
 
 
-    # ========================================================
-    # GET RESPONSE TEXT
-    # ========================================================
+        if not response.choices:
 
-    answer = getattr(
-        response,
-        "text",
-        None,
-    )
+            st.error(
+                "DataMind AI returned an empty response."
+            )
+
+            return
 
 
-    if not answer:
+        answer = response.choices[0].message.content
+
+
+    except Exception:
 
         st.error(
-            "Gemini returned an empty response."
+            "DataMind AI returned an unexpected response."
         )
 
         return
 
 
-    answer = answer.strip()
+    # ========================================================
+    # EMPTY RESPONSE CHECK
+    # ========================================================
+
+    if not answer:
+
+        st.warning(
+            "DataMind AI returned an empty answer."
+        )
+
+        return
+
+
+    answer = str(answer).strip()
+
+
+    if not answer:
+
+        st.warning(
+            "DataMind AI returned an empty answer."
+        )
+
+        return
 
 
     # ========================================================
@@ -737,7 +905,8 @@ st.html(
         &nbsp;&nbsp;|&nbsp;&nbsp;
         Intelligent Data Analytics Platform
         &nbsp;&nbsp;|&nbsp;&nbsp;
-        Built with Streamlit and Gemini
+        Built with Streamlit and Groq
     </div>
     """
 )
+
