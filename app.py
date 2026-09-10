@@ -8,7 +8,6 @@ import secrets
 import smtplib
 import ssl
 import sqlite3
-import streamlit.components.v1 as components
 from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -770,163 +769,6 @@ st.html(
 
 
 # ============================================================
-# HAMBURGER (≡) SIDEBAR TOGGLE
-# ============================================================
-# Drives the sidebar's collapsed/expanded state entirely
-# ourselves via a CSS class on <body> — it never tries to find
-# and click Streamlit's own internal collapse button (that
-# button's internal data-testid differs across Streamlit
-# versions, which is why an earlier approach silently failed).
-#
-# The click handlers are re-bound FRESH on every single script
-# run (not "created once and left alone") so there is no chance
-# of a stale/duplicate handler being the reason a click stops
-# doing anything — every rerun guarantees the button and the
-# nav-links point at a handler that reflects the current DOM.
-#
-# Implemented with components.html because st.html() cannot run
-# <script> tags; components.html() runs in an iframe, so the
-# script reaches into window.parent.document to touch the real
-# Streamlit page.
-
-def render_sidebar_toggle():
-    components.html(
-        """
-        <script>
-        (function () {
-            const doc = window.parent.document;
-
-            // ---- inject styles once ----
-            if (!doc.getElementById("dm-sidebar-toggle-style")) {
-                const style = doc.createElement("style");
-                style.id = "dm-sidebar-toggle-style";
-                style.textContent = `
-                    #dm-sidebar-toggle {
-                        position: fixed;
-                        top: 14px;
-                        left: 14px;
-                        z-index: 2147483647;
-                        width: 40px;
-                        height: 40px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        border-radius: 10px;
-                        border: 1px solid #e2e0ee;
-                        background: #ffffff;
-                        color: #4338ca;
-                        font-size: 20px;
-                        line-height: 1;
-                        cursor: pointer;
-                        box-shadow: 0 6px 16px rgba(76, 29, 149, 0.12);
-                        transition: transform 0.15s ease, box-shadow 0.15s ease;
-                    }
-                    #dm-sidebar-toggle:hover {
-                        transform: translateY(-1px);
-                        box-shadow: 0 10px 22px rgba(76, 29, 149, 0.18);
-                    }
-
-                    /* Hide every native Streamlit sidebar collapse /
-                       expand control. Matches on a substring so it
-                       keeps working even if Streamlit renames the
-                       exact testid between versions ("...Collapse...",
-                       "collapsedControl", etc. all contain "ollaps"). */
-                    [data-testid*="ollaps"] {
-                        display: none !important;
-                    }
-
-                    /* Our own collapse mechanism — independent of
-                       Streamlit's internal state, driven purely by
-                       the dm-sidebar-collapsed class on <body>. */
-                    section[data-testid="stSidebar"] {
-                        transition: width 0.25s ease, min-width 0.25s ease,
-                            margin-left 0.25s ease;
-                    }
-
-                    body.dm-sidebar-collapsed section[data-testid="stSidebar"] {
-                        width: 0px !important;
-                        min-width: 0px !important;
-                        margin-left: -1rem !important;
-                        overflow: hidden !important;
-                    }
-
-                    body.dm-sidebar-collapsed div[data-testid="stAppViewContainer"],
-                    body.dm-sidebar-collapsed section[data-testid="stMain"],
-                    body.dm-sidebar-collapsed div[data-testid="stMain"] {
-                        margin-left: 0 !important;
-                        width: 100% !important;
-                        max-width: 100% !important;
-                    }
-                `;
-                doc.head.appendChild(style);
-            }
-
-            // ---- the "≡" button itself (create once, ----
-            // ---- but rebind its click handler every run) ----
-            let btn = doc.getElementById("dm-sidebar-toggle");
-            if (!btn) {
-                btn = doc.createElement("button");
-                btn.id = "dm-sidebar-toggle";
-                btn.type = "button";
-                btn.innerHTML = "&#9776;";
-                btn.title = "Toggle sidebar";
-                btn.setAttribute("aria-label", "Toggle sidebar");
-                doc.body.appendChild(btn);
-            }
-
-            // Plain toggle — no external state to get out of sync.
-            // Re-assigning .onclick every run overwrites any prior
-            // handler, so it can never go stale or double-fire.
-            btn.onclick = function (event) {
-                event.preventDefault();
-                event.stopPropagation();
-                doc.body.classList.toggle("dm-sidebar-collapsed");
-            };
-
-            // --------------------------------------------------
-            // AUTO-CLOSE THE SIDEBAR ON NAV CLICK
-            // Clicking any link inside the sidebar (Home, AI
-            // Assistant, AI Dashboard, Data Analyst, PDF
-            // Intelligence, Settings, Help, Login, Register)
-            // collapses the sidebar automatically, the way a
-            // mobile/hamburger nav behaves on most websites.
-            //
-            // Bound on `doc` (capture phase) and rebound fresh
-            // every run: any previous copy is removed first so
-            // there is only ever one active listener.
-            // --------------------------------------------------
-
-            if (doc.__dmSidebarNavHandler) {
-                doc.removeEventListener(
-                    "click",
-                    doc.__dmSidebarNavHandler,
-                    true
-                );
-            }
-
-            doc.__dmSidebarNavHandler = function (event) {
-                const link = event.target.closest(
-                    '[data-testid="stSidebar"] a'
-                );
-
-                if (link) {
-                    doc.body.classList.add("dm-sidebar-collapsed");
-                }
-            };
-
-            doc.addEventListener("click", doc.__dmSidebarNavHandler, true);
-        })();
-        </script>
-        """,
-        height=0,
-        width=0,
-    )
-
-
-render_sidebar_toggle()
-
-
-# ============================================================
 # PAGE REGISTRY
 # ============================================================
 # Declared before page functions so Pylance knows that PAGES exists.
@@ -1430,9 +1272,9 @@ def home_page():
             </div>
 
             <div class="dm-founder-message">
-                <span class="dm-quote-mark">"</span>
+                <span class="dm-quote-mark">“</span>
                 Turning ideas into intelligent solutions, one dataset at a time.
-                <span class="dm-quote-mark">"</span>
+                <span class="dm-quote-mark">”</span>
             </div>
 
         </section>
@@ -1740,6 +1582,60 @@ def settings_page():
     )
 
 
+# ============================================================
+# HELP PAGE
+# ============================================================
+
+def help_page():
+
+    st.html(
+        """
+        <div class="dm-page-heading">
+
+            <div class="dm-eyebrow">
+                DATAMIND AI
+            </div>
+
+            <h1>
+                Help & Support
+            </h1>
+
+            <p>
+                Find guidance for using the DataMind AI workspace.
+            </p>
+
+        </div>
+        """
+    )
+
+    with st.expander(
+        "How do I upload data?",
+        expanded=True,
+    ):
+
+        st.write(
+            "Open Data Analyst or AI Dashboard and upload a CSV or Excel file."
+        )
+
+    with st.expander(
+        "How do I use the AI Assistant?"
+    ):
+
+        st.write(
+            "Open AI Assistant, optionally upload a dataset, "
+            "and ask your question in natural language."
+        )
+
+    with st.expander(
+        "How does PDF Intelligence work?"
+    ):
+
+        st.write(
+            "Upload a PDF, let DataMind AI index it, "
+            "then search or ask questions about the document."
+        )
+
+    
 # ============================================================
 # HELP PAGE
 # ============================================================
